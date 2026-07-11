@@ -1,0 +1,80 @@
+// BlindRoute — private delivery escrow.
+//
+// A customer locks payment for a delivery behind a public commitment
+// (a hash of a delivery-proof secret). A courier releases the escrow by
+// proving, in zero knowledge, that they know the secret behind that
+// commitment. The secret itself — and whatever real-world proof of
+// delivery it stands in for (GPS ping, recipient signature, drop-off
+// code) — never touches the ledger. Only the commitment hash, the
+// escrow amount, the state machine, and the courier's derived public
+// key are ever public.
+
+pragma language_version >= 0.20;
+
+import CompactStandardLibrary;
+
+export enum EscrowState {
+  EMPTY,
+  LOCKED,
+  RELEASED
+}
+
+// ── Public state (on-chain, visible to anyone reading the ledger) ──────────
+export ledger state: EscrowState;
+export ledger amount: Uint<64>;
+export ledger deliveryCommitment: Bytes<32>;
+export ledger courier: Bytes<32>;
+export ledger sequence: Counter;
+
+constructor() {
+  state = EscrowState.EMPTY;
+  amount = 0;
+  sequence.increment(1);
+}
+
+// ── Private witnesses (never leave the caller's device) ────────────────────
+// localSecretKey identifies the courier claiming the escrow, without ever
+// disclosing a real-world identity on-chain.
+witness localSecretKey(): Bytes<32>;
+// deliveryProof is the secret behind deliveryCommitment — e.g. a locally
+// generated drop-off code, recipient signature, or GPS attestation. Only
+// its hash is ever committed publicly.
+witness deliveryProof(): Bytes<32>;
+
+// Customer locks payment for a delivery, publishing only the escrow
+// amount and a commitment to the (private) delivery proof the courier
+// will later need to reveal knowledge of.
+export circuit lockEscrow(paymentAmount: Uint<64>, commitment: Bytes<32>): [] {
+  assert(state == EscrowState.EMPTY, "Escrow already locked or released");
+  amount = paymentAmount;
+  deliveryCommitment = commitment;
+  state = EscrowState.LOCKED;
+}
+
+// Courier releases the escrow by proving knowledge of the delivery proof
+// that hashes to deliveryCommitment, without disclosing the proof itself.
+export circuit releaseEscrow(): [] {
+  assert(state == EscrowState.LOCKED, "No active escrow to release");
+  const proof = deliveryProof();
+  assert(
+    commitmentOf(proof) == deliveryCommitment,
+    "Delivery proof does not match commitment"
+  );
+  courier = disclose(publicKey(localSecretKey(), sequence as Field as Bytes<32>));
+  state = EscrowState.RELEASED;
+  sequence.increment(1);
+}
+
+// Hashes a delivery-proof secret into the public commitment stored on the
+// ledger. Callable off-chain (by customer or courier) so both sides can
+// agree on a commitment without ever transmitting the underlying secret.
+export circuit commitmentOf(proof: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<2, Bytes<32>>>([pad(32, "blindroute:commitment:"), proof]);
+}
+
+// Derives a courier's public key from their private secret key and the
+// current escrow sequence, so the same courier can be recognized across
+// escrows without ever revealing the secret key itself.
+export circuit publicKey(sk: Bytes<32>, seq: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<3, Bytes<32>>>([pad(32, "blindroute:courier:"), seq, sk]);
+}
