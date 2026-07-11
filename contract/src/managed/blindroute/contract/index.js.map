@@ -1,0 +1,8 @@
+{
+  "version": 3,
+  "file": "index.js",
+  "sourceRoot": "../../../../",
+  "sources": ["src/blindroute.compact", "compiler/standard-library.compact"],
+  "names": [],
+  "mappings": ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;EA4BA;;;;;;;;;;;;;;;;MAkBA,AAAA,UAKC;;;;;cALyB,eAAuB;cAAE,YAAqB;;;;;;;;;;;;;;;;;;;;;;;;;yCAA9C,eAAuB,+BAAE,YAAqB;;;;;;;;;4CAA9C,eAAuB;4CAAE,YAAqB;;;OAKvE;MAID,AAAA,aAUC;;;;;;;;;;;;;;;;;;;;;;OAAA;MAKD,AAAA,YAEC;;OAAA;MAKD,AAAA,SAEC;;OAAA;;;;;;;;;;GA/CA;EAJD;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;IANA;;;;;;;;;yEAAiC;IACjC;;;;;;;;;yEAA+B;IAC/B;;;;;;;;;yEAA4C;IAC5C;;;;;;;;;yEAAiC;IACjC;;;;;;;;;yEAAgC;IAG9B;;;;;;;;;yEAAK;UACL,KAAM;IAAN;;;;;;;2HAAA,KAAM;;yEAAA;UACN,KAAQ;IAAR;;;;;;;;;;6FAAA,KAAQ;;;;wEAAA;;;;;;;GACT;EChCD,AAAA,kBAAA;oEAAA;;;EAAA,AAAA,kBAAA;oEAAA;;;EDqCA,AAAA,iBAAoC;;0DAApC,cAAoC;;;;;;;;;;;;;;GAAA;EAIpC,AAAA,gBAAmC;;0DAAnC,aAAmC;;;;;;;;;;;;;;GAAA;EAKnC,AAAA,aAKC,4BALyB,eAAuB,EAAE,YAAqB;oDAC/D;;;;;;;;;;;yHAAK;;;;IACZ;;;;;;;2HAAkB,eAAa;;yEAAzB;IACN;;;;;;;2HAA8B,YAAU;;yEAAtB;IAClB;;;;;;;;;yEAAK;;GACN;EAID,AAAA,gBAUC;oDATQ;;;;;;;;;;;yHAAK;;;;UACN,OAAuB;+DAEd,OAAK;kEAAK;;;;;;;;;;;uIAAkB;;UAG3C,KAAO;;;iGAAwC;;;;;;;;;;;sKAAQ;;IAAvD;;;;;;;2HAAA,KAAO;;yEAAA;IACP;;;;;;;;;yEAAK;UACL,KAAQ;IAAR;;;;;;;;;;6FAAA,KAAQ;;;;wEAAA;;GACT;EAKD,AAAA,eAEC,CAF2B,OAAgB;;mCACsC,OAAK;GACtF;EAKD,AAAA,YAEC,CAFwB,IAAa,EAAE,KAAc;;mCACyB,KAAG;mCAAE,IAAE;GACrF;;;;;;;;;;;;;;;;;;;;IAzDD;qCAAA;;;;;;;;;;;0GAAiC;KAAA;IACjC;qCAAA;;;;;;;;;;;0GAA+B;KAAA;IAC/B;qCAAA;;;;;;;;;;;0GAA4C;KAAA;IAC5C;qCAAA;;;;;;;;;;;0GAAiC;KAAA;IACjC;qCAAA;;;;;;;;;;;0GAAgC;KAAA;;;;;;;;;;EA4ChC,AAAA,YAEC;;;;UAF2B,OAAgB;;;;;;;;0CAAhB,OAAgB;GAE3C;EAKD,AAAA,SAEC;;;;UAFwB,IAAa;UAAE,KAAc;;;;;;;;;;;;;;;uCAA7B,IAAa,EAAE,KAAc;GAErD;;;;"
+}
