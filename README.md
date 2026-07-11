@@ -81,7 +81,15 @@ npm test
 
 Runs the vitest simulator-based unit tests in `contract/src/test/`, exercising `lockEscrow` / `releaseEscrow` against every branch (empty→locked, correct proof, wrong proof, double-lock, double-release) without needing a live network.
 
-### 6. Deploy to Preview or Preprod
+### 6. Build the contract package
+
+```bash
+npm run build
+```
+
+Still in `contract/`. The CLI imports `@midnight-ntwrk/blindroute-contract` by package name, which resolves through `dist/` — this compiles the TypeScript and copies `src/managed/` into it.
+
+### 7. Deploy to Preview or Preprod
 
 From the `cli/` directory, start the local proof server and the interactive deploy CLI in one command:
 
