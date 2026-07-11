@@ -57,7 +57,7 @@ globalThis.WebSocket = WebSocket;
 
 // Pre-compile the BlindRoute contract with ZK circuit assets
 const blindRouteCompiledContract = CompiledContract.make('blindroute', BlindRoute.Contract).pipe(
-  CompiledContract.withVacantWitnesses,
+  CompiledContract.withWitnesses(witnesses),
   CompiledContract.withCompiledFileAssets(contractConfig.zkConfigPath),
 );
 
@@ -513,6 +513,19 @@ export const buildWalletAndWaitForFunds = async (config: Config, seed: string): 
       return { wallet, shieldedSecretKeys, dustSecretKey, unshieldedKeystore };
     },
   );
+
+  // TEMP DEBUG: log raw sync progress + memory every 3s to diagnose the OOM
+  if (process.env.BLINDROUTE_DEBUG_SYNC) {
+    Rx.interval(3000).subscribe(() => {
+      Rx.firstValueFrom(wallet.state()).then((s) => {
+        const p = s.unshielded.progress;
+        const mem = process.memoryUsage();
+        console.log(
+          `\n[DEBUG] isSynced=${s.isSynced} isConnected=${p.isConnected} appliedId=${p.appliedId} highestTxId=${p.highestTransactionId} rss=${Math.round(mem.rss / 1024 / 1024)}MB heapUsed=${Math.round(mem.heapUsed / 1024 / 1024)}MB`,
+        );
+      });
+    });
+  }
 
   // Show unshielded address immediately so user can fund via faucet while syncing
   const networkId = getNetworkId();

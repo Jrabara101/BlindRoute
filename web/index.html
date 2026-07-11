@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BlindRoute — Deploy</title>
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 640px; margin: 3rem auto; padding: 0 1rem; }
+      button { font-size: 1rem; padding: 0.6rem 1.2rem; margin-right: 0.5rem; cursor: pointer; }
+      button:disabled { cursor: not-allowed; opacity: 0.5; }
+      pre { background: #f4f4f4; padding: 1rem; overflow-x: auto; white-space: pre-wrap; word-break: break-all; }
+      .row { margin: 1rem 0; }
+    </style>
+  </head>
+  <body>
+    <h1>BlindRoute — Deploy Escrow Contract</h1>
+    <p>Connects to the Midnight Lace wallet in your browser, then deploys the BlindRoute escrow contract to the network Lace is configured for.</p>
+
+    <div class="row">
+      <button id="connect">1. Connect wallet</button>
+      <span id="connect-status"></span>
+    </div>
+
+    <div class="row">
+      <button id="deploy" disabled>2. Deploy contract</button>
+      <span id="deploy-status"></span>
+    </div>
+
+    <pre id="log"></pre>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

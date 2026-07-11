@@ -1,0 +1,23 @@
+{
+  "name": "@midnight-ntwrk/blindroute-web",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json --noEmit && vite build && cp -r ../contract/src/managed/blindroute/keys ./dist/managed/blindroute/keys && cp -r ../contract/src/managed/blindroute/zkir ./dist/managed/blindroute/zkir",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@midnight-ntwrk/blindroute-contract": "*",
+    "@midnight-ntwrk/dapp-connector-api": "^4.0.1",
+    "@midnight-ntwrk/midnight-js-fetch-zk-config-provider": "^4.1.1",
+    "buffer": "^6.0.3"
+  },
+  "devDependencies": {
+    "vite": "^8.1.4",
+    "vite-plugin-wasm": "^3.6.0"
+  }
+}
