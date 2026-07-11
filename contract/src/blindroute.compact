@@ -46,8 +46,8 @@ witness deliveryProof(): Bytes<32>;
 // will later need to reveal knowledge of.
 export circuit lockEscrow(paymentAmount: Uint<64>, commitment: Bytes<32>): [] {
   assert(state == EscrowState.EMPTY, "Escrow already locked or released");
-  amount = paymentAmount;
-  deliveryCommitment = commitment;
+  amount = disclose(paymentAmount);
+  deliveryCommitment = disclose(commitment);
   state = EscrowState.LOCKED;
 }
 

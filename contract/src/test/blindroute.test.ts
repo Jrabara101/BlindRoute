@@ -49,9 +49,12 @@ describe("BlindRoute escrow contract", () => {
     const commitment = simulator.commitmentOf(proof);
     simulator.lockEscrow(1_000n, commitment);
 
+    // releaseEscrow derives the courier key from the sequence *before*
+    // incrementing it, so the expected key must be captured beforehand.
+    const expectedCourierKey = simulator.courierPublicKey();
     const ledgerState = simulator.releaseEscrow();
     expect(ledgerState.state).toEqual(EscrowState.RELEASED);
-    expect(ledgerState.courier).toEqual(simulator.courierPublicKey());
+    expect(ledgerState.courier).toEqual(expectedCourierKey);
     // the payment amount and commitment remain on the public record
     expect(ledgerState.amount).toEqual(1_000n);
     expect(ledgerState.deliveryCommitment).toEqual(commitment);
