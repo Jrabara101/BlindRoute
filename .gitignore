@@ -58,6 +58,7 @@ jspm_packages/
 *.ntvs*
 *.njsproj
 *.sln
+.claude/
 
 # NOTE: contract/src/managed/ is intentionally NOT ignored — the bootcamp
 # submission requires the generated circuits + keys to be present in the repo.

@@ -8,6 +8,7 @@ import { deployContract } from '@midnight-ntwrk/midnight-js/contracts';
 import { setNetworkId } from '@midnight-ntwrk/midnight-js/network-id';
 import { createProofProvider, type UnboundTransaction } from '@midnight-ntwrk/midnight-js/types';
 import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
+import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
 import { toHex, fromHex } from '@midnight-ntwrk/midnight-js/utils';
 import { CompiledContract } from '@midnight-ntwrk/compact-js';
 import {
@@ -17,6 +18,7 @@ import {
 } from '@midnight-ntwrk/midnight-js-protocol/ledger';
 import { BlindRoute, witnesses, type BlindRoutePrivateState } from '@midnight-ntwrk/blindroute-contract';
 import { inMemoryPrivateStateProvider } from './in-memory-private-state-provider';
+import { Cause } from 'effect';
 
 declare global {
   interface Window {
@@ -49,7 +51,7 @@ const connectToWallet = async (): Promise<ConnectedAPI> => {
   }
   const wallet = wallets[0];
   log(`Found wallet: ${wallet.name} (apiVersion ${wallet.apiVersion})`);
-  const connectedApi = await wallet.connect('preprod');
+  const connectedApi = await wallet.connect('preview');
   const status = await connectedApi.getConnectionStatus();
   if (status.status !== 'connected') {
     throw new Error('Wallet did not report a connected status after connect().');
@@ -94,9 +96,17 @@ deployButton.addEventListener('click', () => {
 
       // FetchZkConfigProvider fetches circuit assets from {origin}/keys/{circuit}.prover etc.
       // — served directly from web/public/keys and web/public/zkir at this app's origin.
-      const zkConfigProvider = new FetchZkConfigProvider<'lockEscrow' | 'releaseEscrow'>(window.location.origin);
-      const provingProvider = await connectedApi.getProvingProvider(zkConfigProvider.asKeyMaterialProvider());
-      const proofProvider = createProofProvider(provingProvider);
+      const zkConfigProvider = new FetchZkConfigProvider<'lockEscrow' | 'releaseEscrow'>(
+        window.location.origin,
+        fetch.bind(window),
+      );
+      // Some wallet builds (e.g. the deprecated Lace Midnight Preview extension) don't
+      // implement getProvingProvider() yet. Fall back to proving via our own local proof
+      // server (started earlier for the CLI work) instead of asking the wallet to prove.
+      const proofProvider =
+        typeof connectedApi.getProvingProvider === 'function'
+          ? createProofProvider(await connectedApi.getProvingProvider(zkConfigProvider.asKeyMaterialProvider()))
+          : httpClientProofProvider('http://localhost:6300', zkConfigProvider);
 
       const shieldedAddresses = await connectedApi.getShieldedAddresses();
 
@@ -141,7 +151,23 @@ deployButton.addEventListener('click', () => {
       setStatus('deploy-status', 'deployed!');
       log(`Contract deployed at: ${address}`);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
+      console.error('Raw deploy error object:', e);
+      let msg = e instanceof Error ? e.message : String(e);
+      // Effect.js FiberFailure: .message is always empty, the real reason is in .cause (a Cause<E>).
+      if (!msg && e && typeof e === 'object' && 'cause' in e) {
+        try {
+          msg = Cause.pretty((e as { cause: Cause.Cause<unknown> }).cause);
+        } catch {
+          // fall through
+        }
+      }
+      if (!msg) {
+        try {
+          msg = JSON.stringify(e, Object.getOwnPropertyNames(e as object));
+        } catch {
+          msg = '(unstringifiable error — check browser console for the raw object)';
+        }
+      }
       setStatus('deploy-status', `failed: ${msg}`);
       log(`Deploy error: ${msg}`);
       if (e instanceof Error && e.stack) log(e.stack);

@@ -91,25 +91,35 @@ Still in `contract/`. The CLI imports `@midnight-ntwrk/blindroute-contract` by p
 
 ### 7. Deploy to Preview or Preprod
 
-From the `cli/` directory, start the local proof server and the interactive deploy CLI in one command:
+Two deploy paths are included. **Use the browser app (`web/`)** — the Node.js CLI's wallet sync currently hits a real bug in the installed `wallet-sdk-facade` version (sync progress never advances past zero while leaking memory until the process crashes; reproduced consistently on both Preprod and Preview with healthy indexer/RPC endpoints). The browser app sidesteps this entirely by delegating wallet sync, balancing, signing, and proving to the [Lace](https://chromewebstore.google.com/detail/lace/gafhhkghbfjjkeiendhlofajokpaflmk) browser extension instead of our own wallet code.
 
 ```bash
-cd ../cli
+cd web
+npm run dev
+```
+
+Open the printed local URL, then:
+1. Click **"1. Connect wallet"** and authorize the connection in Lace.
+2. Fund the wallet's unshielded address from the [Preview faucet](https://faucet.preview.midnight.network/) (or [Preprod faucet](https://faucet.preprod.midnight.network/)).
+3. If the wallet's DUST balance is empty, use Lace's dust-designation action (registers your NIGHT to start generating DUST, the fee token) and wait for it to accumulate — a small amount is enough.
+4. Click **"2. Deploy contract"**. Approve any Lace prompts (prove/sign, then submit).
+
+**Known snags and fixes**, in case you hit them:
+- If deploy fails immediately with a wallet-detection error, disable any other Midnight-wallet browser extension so only one is active.
+- If the browser silently drops Lace's confirmation popup (error says "cancelled by user" but no popup ever appeared), your browser's popup blocker is likely eating it — allow popups for the app's `localhost` origin and retry.
+- "Insufficient funds: dust" means the wallet needs its NIGHT registered for DUST generation first (see step 3 above).
+
+The CLI (`cli/`) remains in the repo and compiles/typechecks cleanly, documented here for completeness and as the more typical multi-network deploy path once the upstream wallet-sdk-facade issue is fixed:
+
+```bash
+cd cli
 npm run preprod-ps   # or: npm run preview-ps
 ```
 
-This will:
-1. Start a local Midnight proof server via Docker.
-2. Prompt you to create a fresh wallet (or restore one from a seed) and show you an unshielded address.
-3. Wait for you to fund that address from the [Preprod faucet](https://faucet.preprod.midnight.network/) (or [Preview faucet](https://faucet.preview.midnight.network/)).
-4. Once funded, open the contract menu — choose **Deploy a new BlindRoute escrow contract** to deploy and print the contract address.
-
-See `docs/screenshot-deploy.png` for a sample deployment showing the resulting contract address.
-
 ## Deployed contract
 
-- Network: _Preprod / Preview_ (fill in after deploying)
-- Contract address: `0x...` (fill in after deploying)
+- Network: **Preview**
+- Contract address: `3735c0b2becc5339f769023a902cbc51d59bb0dc1bb45e34d694921a2a907f1c`
 
 ## Status
 
