@@ -119,7 +119,7 @@ npm run preprod-ps   # or: npm run preview-ps
 ## Deployed contract
 
 - Network: **Preview**
-- Contract address: `3735c0b2becc5339f769023a902cbc51d59bb0dc1bb45e34d694921a2a907f1c`
+- Contract address: `e7ceb9e25fb84d63f68ffc55b9a4ce2dbe2e7a69873568a901ff86b3d1016ba7`
 
 ## Status
 
