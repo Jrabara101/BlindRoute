@@ -2,29 +2,20 @@
 import { Buffer } from 'buffer';
 (globalThis as unknown as { Buffer: typeof Buffer }).Buffer = Buffer;
 
-import type { InitialAPI, ConnectedAPI } from '@midnight-ntwrk/dapp-connector-api';
-import { FetchZkConfigProvider } from '@midnight-ntwrk/midnight-js-fetch-zk-config-provider';
-import { deployContract } from '@midnight-ntwrk/midnight-js/contracts';
 import { setNetworkId } from '@midnight-ntwrk/midnight-js/network-id';
-import { createProofProvider, type UnboundTransaction } from '@midnight-ntwrk/midnight-js/types';
-import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
-import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
-import { toHex, fromHex } from '@midnight-ntwrk/midnight-js/utils';
-import { CompiledContract } from '@midnight-ntwrk/compact-js';
+import type { BlindRoutePrivateState } from '@midnight-ntwrk/blindroute-contract';
+import { connectWallet, type WalletConnection } from './wallet';
 import {
-  Transaction,
-  type FinalizedTransaction,
-  type TransactionId,
-} from '@midnight-ntwrk/midnight-js-protocol/ledger';
-import { BlindRoute, witnesses, type BlindRoutePrivateState } from '@midnight-ntwrk/blindroute-contract';
-import { inMemoryPrivateStateProvider } from './in-memory-private-state-provider';
-import { Cause } from 'effect';
-
-declare global {
-  interface Window {
-    midnight?: Record<string, InitialAPI>;
-  }
-}
+  buildProviders,
+  commitmentOf,
+  deploy,
+  generateBlindRoutePrivateState,
+  getEscrowLedgerState,
+  join,
+  lockEscrow,
+  releaseEscrow,
+} from './contract';
+import { describeError } from './errors';
 
 const log = (msg: string): void => {
   const el = document.getElementById('log');
@@ -32,146 +23,220 @@ const log = (msg: string): void => {
   console.log(msg);
 };
 
-const setStatus = (id: string, text: string): void => {
+const setStatus = (id: string, text: string, cls?: 'error' | 'ok'): void => {
   const el = document.getElementById(id);
-  if (el) el.textContent = text;
+  if (!el) return;
+  el.textContent = text;
+  el.className = cls ?? '';
 };
 
-const generateBlindRoutePrivateState = (): BlindRoutePrivateState => ({
-  secretKey: crypto.getRandomValues(new Uint8Array(32)),
-  deliveryProofSecret: crypto.getRandomValues(new Uint8Array(32)),
-});
-
-const listWallets = (): InitialAPI[] => (window.midnight ? Object.values(window.midnight) : []);
-
-const connectToWallet = async (): Promise<ConnectedAPI> => {
-  const wallets = listWallets();
-  if (wallets.length === 0) {
-    throw new Error('No Midnight wallet found. Install the Lace wallet extension, then reload this page.');
-  }
-  const wallet = wallets[0];
-  log(`Found wallet: ${wallet.name} (apiVersion ${wallet.apiVersion})`);
-  const connectedApi = await wallet.connect('preview');
-  const status = await connectedApi.getConnectionStatus();
-  if (status.status !== 'connected') {
-    throw new Error('Wallet did not report a connected status after connect().');
-  }
-  log(`Connected to network: ${status.networkId}`);
-  return connectedApi;
-};
-
-let connectedApi: ConnectedAPI | undefined;
-
+// ── DOM refs ────────────────────────────────────────────────────────────────
 const connectButton = document.getElementById('connect') as HTMLButtonElement;
+const disconnectButton = document.getElementById('disconnect') as HTMLButtonElement;
 const deployButton = document.getElementById('deploy') as HTMLButtonElement;
+const joinAddressInput = document.getElementById('join-address') as HTMLInputElement;
+const joinButton = document.getElementById('join') as HTMLButtonElement;
+const lockAmountInput = document.getElementById('lock-amount') as HTMLInputElement;
+const lockButton = document.getElementById('lock') as HTMLButtonElement;
+const releaseButton = document.getElementById('release') as HTMLButtonElement;
 
+// ── Session state ────────────────────────────────────────────────────────────
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let providers: any;
+let connection: WalletConnection | undefined;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let activeContract: any;
+let activeContractAddress: string | undefined;
+// Never rendered to the DOM or logged — only its public commitment hash is.
+let privateState: BlindRoutePrivateState | undefined;
+
+const resetToDisconnected = (): void => {
+  connection = undefined;
+  providers = undefined;
+  activeContract = undefined;
+  activeContractAddress = undefined;
+  privateState = undefined;
+
+  connectButton.disabled = false;
+  disconnectButton.disabled = true;
+  setStatus('wallet-status', 'Not connected.');
+
+  deployButton.disabled = true;
+  joinAddressInput.disabled = true;
+  joinButton.disabled = true;
+  setStatus('contract-status', 'No contract active.');
+
+  lockAmountInput.disabled = true;
+  lockButton.disabled = true;
+  releaseButton.disabled = true;
+  setStatus('escrow-status', '—');
+  setStatus('ledger-state', 'No ledger state yet.');
+};
+
+const refreshLedgerState = async (): Promise<void> => {
+  if (!activeContractAddress) return;
+  const ledgerEl = document.getElementById('ledger-state');
+  if (!ledgerEl) return;
+  const escrow = await getEscrowLedgerState(providers, activeContractAddress);
+  if (escrow === null) {
+    ledgerEl.textContent = 'No contract state found at this address.';
+    return;
+  }
+  ledgerEl.textContent = JSON.stringify({ ...escrow, amount: escrow.amount.toString() }, null, 2);
+
+  // Public ledger state drives which circuit makes sense to call next.
+  lockButton.disabled = escrow.state !== 'EMPTY';
+  lockAmountInput.disabled = escrow.state !== 'EMPTY';
+  releaseButton.disabled = escrow.state !== 'LOCKED';
+};
+
+// ── Wallet connect / disconnect ──────────────────────────────────────────────
 connectButton.addEventListener('click', () => {
   void (async () => {
     connectButton.disabled = true;
-    setStatus('connect-status', 'connecting...');
+    setStatus('wallet-status', 'connecting...');
     try {
-      connectedApi = await connectToWallet();
-      const { unshieldedAddress } = await connectedApi.getUnshieldedAddress();
-      setStatus('connect-status', `connected: ${unshieldedAddress}`);
+      connection = await connectWallet();
+      log(`Connected to network: ${connection.networkId}`);
+      setNetworkId(connection.networkId as Parameters<typeof setNetworkId>[0]);
+
+      const configuration = await connection.api.getConfiguration();
+      log(`Indexer: ${configuration.indexerUri}`);
+      providers = await buildProviders(connection.api, configuration);
+
+      setStatus('wallet-status', `connected: ${connection.unshieldedAddress}`, 'ok');
+      disconnectButton.disabled = false;
       deployButton.disabled = false;
+      joinAddressInput.disabled = false;
+      joinButton.disabled = false;
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      setStatus('connect-status', `failed: ${msg}`);
+      const msg = describeError(e);
+      setStatus('wallet-status', `failed: ${msg}`, 'error');
       log(`Connect error: ${msg}`);
       connectButton.disabled = false;
     }
   })();
 });
 
+// There is no wallet-side "disconnect" call in the DApp Connector API (no
+// session teardown exists in the injected API) — disconnecting here just
+// means this app stops holding the wallet reference and forgets the active
+// contract/private state, returning the UI to its pre-connection state.
+disconnectButton.addEventListener('click', () => {
+  resetToDisconnected();
+  log('Disconnected.');
+});
+
+// ── Deploy / join contract ───────────────────────────────────────────────────
+const activateContract = (contract: unknown, address: string): void => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  activeContract = contract as any;
+  activeContractAddress = address;
+  setStatus('contract-status', `Active contract: ${address}`, 'ok');
+  lockAmountInput.disabled = false;
+  lockButton.disabled = false;
+  void refreshLedgerState();
+};
+
 deployButton.addEventListener('click', () => {
   void (async () => {
-    if (!connectedApi) return;
+    if (!providers) return;
     deployButton.disabled = true;
-    setStatus('deploy-status', 'deploying... (this can take 20-30s)');
+    joinButton.disabled = true;
+    setStatus('contract-status', 'deploying... (this can take 20-30s)');
     try {
-      const configuration = await connectedApi.getConfiguration();
-      setNetworkId(configuration.networkId as Parameters<typeof setNetworkId>[0]);
-      log(`Network: ${configuration.networkId}`);
-      log(`Indexer: ${configuration.indexerUri}`);
-
-      // FetchZkConfigProvider fetches circuit assets from {origin}/keys/{circuit}.prover etc.
-      // — served directly from web/public/keys and web/public/zkir at this app's origin.
-      const zkConfigProvider = new FetchZkConfigProvider<'lockEscrow' | 'releaseEscrow'>(
-        window.location.origin,
-        fetch.bind(window),
-      );
-      // Some wallet builds (e.g. the deprecated Lace Midnight Preview extension) don't
-      // implement getProvingProvider() yet. Fall back to proving via our own local proof
-      // server (started earlier for the CLI work) instead of asking the wallet to prove.
-      const proofProvider =
-        typeof connectedApi.getProvingProvider === 'function'
-          ? createProofProvider(await connectedApi.getProvingProvider(zkConfigProvider.asKeyMaterialProvider()))
-          : httpClientProofProvider('http://localhost:6300', zkConfigProvider);
-
-      const shieldedAddresses = await connectedApi.getShieldedAddresses();
-
-      const compiledContract = CompiledContract.make('blindroute', BlindRoute.Contract).pipe(
-        CompiledContract.withWitnesses(witnesses),
-        CompiledContract.withCompiledFileAssets('.'),
-      );
-
-      const providers = {
-        privateStateProvider: inMemoryPrivateStateProvider<string, BlindRoutePrivateState>(),
-        publicDataProvider: indexerPublicDataProvider(configuration.indexerUri, configuration.indexerWsUri),
-        zkConfigProvider,
-        proofProvider,
-        walletProvider: {
-          getCoinPublicKey: () => shieldedAddresses.shieldedCoinPublicKey,
-          getEncryptionPublicKey: () => shieldedAddresses.shieldedEncryptionPublicKey,
-          balanceTx: async (tx: UnboundTransaction): Promise<FinalizedTransaction> => {
-            log('Balancing transaction via Lace...');
-            const serializedTx = toHex(tx.serialize());
-            const received = await connectedApi!.balanceUnsealedTransaction(serializedTx);
-            return Transaction.deserialize('signature', 'proof', 'binding', fromHex(received.tx)) as FinalizedTransaction;
-          },
-        },
-        midnightProvider: {
-          submitTx: async (tx: FinalizedTransaction): Promise<TransactionId> => {
-            log('Submitting transaction via Lace...');
-            await connectedApi!.submitTransaction(toHex(tx.serialize()));
-            return tx.identifiers()[0];
-          },
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any;
-
-      const privateState = generateBlindRoutePrivateState();
-      const deployed = await deployContract(providers, {
-        compiledContract,
-        privateStateId: 'blindroutePrivateState',
-        initialPrivateState: privateState,
-      });
-
+      privateState = generateBlindRoutePrivateState();
+      const deployed = await deploy(providers, privateState);
       const address = deployed.deployTxData.public.contractAddress;
-      setStatus('deploy-status', 'deployed!');
       log(`Contract deployed at: ${address}`);
+      activateContract(deployed, address);
     } catch (e) {
-      console.error('Raw deploy error object:', e);
-      let msg = e instanceof Error ? e.message : String(e);
-      // Effect.js FiberFailure: .message is always empty, the real reason is in .cause (a Cause<E>).
-      if (!msg && e && typeof e === 'object' && 'cause' in e) {
-        try {
-          msg = Cause.pretty((e as { cause: Cause.Cause<unknown> }).cause);
-        } catch {
-          // fall through
-        }
-      }
-      if (!msg) {
-        try {
-          msg = JSON.stringify(e, Object.getOwnPropertyNames(e as object));
-        } catch {
-          msg = '(unstringifiable error — check browser console for the raw object)';
-        }
-      }
-      setStatus('deploy-status', `failed: ${msg}`);
+      const msg = describeError(e);
+      setStatus('contract-status', `deploy failed: ${msg}`, 'error');
       log(`Deploy error: ${msg}`);
-      if (e instanceof Error && e.stack) log(e.stack);
+    } finally {
       deployButton.disabled = false;
+      joinButton.disabled = false;
     }
   })();
 });
+
+joinButton.addEventListener('click', () => {
+  void (async () => {
+    if (!providers) return;
+    const address = joinAddressInput.value.trim();
+    if (!address) {
+      setStatus('contract-status', 'Enter a contract address to join.', 'error');
+      return;
+    }
+    deployButton.disabled = true;
+    joinButton.disabled = true;
+    setStatus('contract-status', 'joining...');
+    try {
+      // A fresh private state means release will only succeed if this same
+      // session also locked the escrow (its deliveryProofSecret must match
+      // the commitment already on-chain) — see README for why this is by design.
+      privateState = generateBlindRoutePrivateState();
+      const found = await join(providers, address, privateState);
+      log(`Joined contract at: ${address}`);
+      activateContract(found, address);
+    } catch (e) {
+      const msg = describeError(e);
+      setStatus('contract-status', `join failed: ${msg}`, 'error');
+      log(`Join error: ${msg}`);
+    } finally {
+      deployButton.disabled = false;
+      joinButton.disabled = false;
+    }
+  })();
+});
+
+// ── Escrow circuits ──────────────────────────────────────────────────────────
+lockButton.addEventListener('click', () => {
+  void (async () => {
+    if (!activeContract || !privateState) return;
+    const amountStr = lockAmountInput.value.trim();
+    const paymentAmount = BigInt(amountStr || '0');
+    if (paymentAmount <= 0n) {
+      setStatus('escrow-status', 'Enter a payment amount greater than zero.', 'error');
+      return;
+    }
+    lockButton.disabled = true;
+    setStatus('escrow-status', 'locking escrow... (generating proof locally)');
+    try {
+      // The commitment is a public hash — safe to log. The secret behind it never is.
+      const commitment = commitmentOf(privateState.deliveryProofSecret);
+      log(`Commitment (public, hex): ${Buffer.from(commitment).toString('hex')}`);
+      const result = await lockEscrow(activeContract, paymentAmount, commitment);
+      log(`Lock tx ${result.public.txId} included at block ${result.public.blockHeight}`);
+      setStatus('escrow-status', `Escrow locked for ${paymentAmount}.`, 'ok');
+      await refreshLedgerState();
+    } catch (e) {
+      const msg = describeError(e);
+      setStatus('escrow-status', `lock failed: ${msg}`, 'error');
+      log(`Lock error: ${msg}`);
+      lockButton.disabled = false;
+    }
+  })();
+});
+
+releaseButton.addEventListener('click', () => {
+  void (async () => {
+    if (!activeContract) return;
+    releaseButton.disabled = true;
+    setStatus('escrow-status', 'releasing escrow... (proving delivery locally — this can take a while)');
+    try {
+      const result = await releaseEscrow(activeContract);
+      log(`Release tx ${result.public.txId} included at block ${result.public.blockHeight}`);
+      setStatus('escrow-status', 'Escrow released — proved without revealing your input.', 'ok');
+      await refreshLedgerState();
+    } catch (e) {
+      const msg = describeError(e);
+      setStatus('escrow-status', `release failed: ${msg}`, 'error');
+      log(`Release error: ${msg}`);
+      releaseButton.disabled = false;
+    }
+  })();
+});
+
+resetToDisconnected();

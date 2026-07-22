@@ -3,29 +3,75 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BlindRoute — Deploy</title>
+    <title>BlindRoute — Preprod Demo</title>
     <style>
-      body { font-family: system-ui, sans-serif; max-width: 640px; margin: 3rem auto; padding: 0 1rem; }
+      body { font-family: system-ui, sans-serif; max-width: 720px; margin: 3rem auto; padding: 0 1rem; }
       button { font-size: 1rem; padding: 0.6rem 1.2rem; margin-right: 0.5rem; cursor: pointer; }
       button:disabled { cursor: not-allowed; opacity: 0.5; }
+      input[type="text"], input[type="number"] { font-size: 1rem; padding: 0.5rem; margin-right: 0.5rem; }
       pre { background: #f4f4f4; padding: 1rem; overflow-x: auto; white-space: pre-wrap; word-break: break-all; }
+      section { margin: 2rem 0; padding-top: 1rem; border-top: 1px solid #ddd; }
       .row { margin: 1rem 0; }
+      .privacy-badge { display: inline-block; background: #0a7a3d; color: white; font-size: 0.85rem; padding: 0.2rem 0.6rem; border-radius: 999px; margin-left: 0.5rem; }
+      .privacy-panel { background: #fff8e6; border: 1px solid #e8d18a; padding: 1rem; border-radius: 6px; }
+      .privacy-panel h3 { margin-top: 0; }
+      .error { color: #a30000; }
+      .ok { color: #0a7a3d; }
     </style>
   </head>
   <body>
-    <h1>BlindRoute — Deploy Escrow Contract</h1>
-    <p>Connects to the Midnight Lace wallet in your browser, then deploys the BlindRoute escrow contract to the network Lace is configured for.</p>
+    <h1>BlindRoute — Private Delivery Escrow</h1>
+    <p>
+      Connects to the Midnight Lace wallet, deploys or joins the BlindRoute escrow contract on
+      <strong>Preprod</strong>, and calls its circuits directly from the browser.
+    </p>
 
-    <div class="row">
-      <button id="connect">1. Connect wallet</button>
-      <span id="connect-status"></span>
+    <div class="privacy-panel">
+      <h3>Privacy model</h3>
+      <p><strong>Public</strong> (anyone reading the chain sees this): escrow state, payment amount, the delivery
+        <em>commitment hash</em>, and the courier's derived public key.</p>
+      <p><strong>Private</strong> (never leaves this browser tab, never appears below): the delivery-proof secret and
+        the courier's identity secret key.</p>
+      <p>Releasing the escrow submits a zero-knowledge proof that the caller knows the secret behind the commitment —
+        <strong>without disclosing the secret itself</strong>.</p>
     </div>
 
-    <div class="row">
-      <button id="deploy" disabled>2. Deploy contract</button>
-      <span id="deploy-status"></span>
-    </div>
+    <section id="wallet-section">
+      <h2>1. Wallet</h2>
+      <div class="row">
+        <button id="connect">Connect Lace wallet</button>
+        <button id="disconnect" disabled>Disconnect</button>
+      </div>
+      <div class="row" id="wallet-status">Not connected.</div>
+    </section>
 
+    <section id="contract-section">
+      <h2>2. Contract (Preprod)</h2>
+      <div class="row">
+        <button id="deploy" disabled>Deploy new contract</button>
+      </div>
+      <div class="row">
+        <input type="text" id="join-address" placeholder="Existing contract address (hex)" size="40" disabled />
+        <button id="join" disabled>Join contract</button>
+      </div>
+      <div class="row" id="contract-status">No contract active.</div>
+    </section>
+
+    <section id="escrow-section">
+      <h2>3. Escrow circuits</h2>
+      <div class="row">
+        <input type="number" id="lock-amount" placeholder="Payment amount" min="1" disabled />
+        <button id="lock" disabled>Lock escrow (customer)</button>
+      </div>
+      <div class="row">
+        <button id="release" disabled>Release escrow (courier)</button>
+        <span class="privacy-badge">Proved without revealing your input</span>
+      </div>
+      <div class="row" id="escrow-status">—</div>
+      <pre id="ledger-state">No ledger state yet.</pre>
+    </section>
+
+    <h2>Log</h2>
     <pre id="log"></pre>
 
     <script type="module" src="/src/main.ts"></script>
