@@ -7,8 +7,9 @@
 
 import type { ConnectedAPI, InitialAPI } from '@midnight-ntwrk/dapp-connector-api';
 
-// Level 2 requires deployment and interaction on Preprod specifically.
-export const REQUIRED_NETWORK_ID = 'preprod';
+// Targeting Preview rather than Preprod — confirmed with challenge organizers
+// as an acceptable substitute after Preprod infrastructure proved unstable.
+export const REQUIRED_NETWORK_ID = 'preview';
 
 export class WalletError extends Error {}
 
@@ -70,7 +71,7 @@ export const connectWallet = async (): Promise<WalletConnection> => {
   if (status.networkId !== REQUIRED_NETWORK_ID) {
     throw new WalletError(
       `Lace is connected to network '${status.networkId}', but this app requires '${REQUIRED_NETWORK_ID}'. ` +
-        `Switch Lace's active network to Preprod (wallet settings) and reconnect.`,
+        `Switch Lace's active network to Preview (wallet settings) and reconnect.`,
     );
   }
 

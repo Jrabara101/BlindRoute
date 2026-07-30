@@ -10,8 +10,10 @@
 
 | Network | Address |
 |---------|---------|
-| Preprod | `[PASTE PREPROD CONTRACT ADDRESS]` |
+| Preview (Level 2) | `[PASTE PREVIEW CONTRACT ADDRESS]` |
 | Preview (Level 1) | `e7ceb9e25fb84d63f68ffc55b9a4ce2dbe2e7a69873568a901ff86b3d1016ba7` |
+
+> Deployed to **Preview** rather than Preprod — confirmed with the challenge organizers as an acceptable substitute after Preprod's indexer/dust-sponsor infrastructure proved unstable at submission time.
 
 ## What This Does
 
@@ -22,7 +24,7 @@ BlindRoute resolves this by separating verification from visibility:
 - A **customer** locks a payment escrow on-chain, publishing only the amount and a public *commitment* (a hash) of a private delivery-proof secret.
 - A **courier** releases the escrow by proving, in zero knowledge, that they know the secret behind that commitment — without the secret (or whatever real-world proof it stands in for: a GPS ping, a recipient signature, a drop-off code) ever touching the ledger.
 
-The frontend in `web/` connects to the Lace wallet via the Midnight DApp Connector API, deploys or joins the contract on Preprod, and calls both circuits directly from the browser — proofs are generated locally, and only the resulting transaction is submitted on-chain.
+The frontend in `web/` connects to the Lace wallet via the Midnight DApp Connector API, deploys or joins the contract on Preview, and calls both circuits directly from the browser — proofs are generated locally, and only the resulting transaction is submitted on-chain.
 
 ## Privacy Model
 
@@ -46,7 +48,7 @@ Midnight network, [Compact](https://docs.midnight.network/relnotes/compact), Mid
 
 ## Prerequisites
 
-- [Lace wallet](https://chromewebstore.google.com/detail/lace/gafhhkghbfjjkeiendhlofajokpaflmk) browser extension, configured for the **Preprod** network, with test funds from the [Preprod faucet](https://faucet.preprod.midnight.network/)
+- [Lace wallet](https://chromewebstore.google.com/detail/lace/gafhhkghbfjjkeiendhlofajokpaflmk) browser extension, configured for the **Preview** network, with test funds from the [Preview faucet](https://faucet.preview.midnight.network/)
 - Node.js 20+ (Compact's own toolchain needs WSL/Linux/macOS — see below — but the `web/` frontend itself runs fine on any platform once `contract/` is built)
 - [WSL + Ubuntu](https://docs.midnight.network/guides/windows-compact-setup) (Windows only, for the Compact compiler / `contract` build step)
 - [Docker](https://www.docker.com/products/docker-desktop/) (optional — only needed if your wallet build doesn't support `getProvingProvider()` and the app falls back to a local proof server)
@@ -70,8 +72,8 @@ npm run dev
 
 Open the printed local URL, then:
 
-1. Click **Connect Lace wallet** and authorize the connection. (Lace must be set to the Preprod network — see [Privacy Model](#privacy-model) note above.)
-2. Click **Deploy new contract** (or paste an existing Preprod address into **Join contract**).
+1. Click **Connect Lace wallet** and authorize the connection. (Lace must be set to the Preview network.)
+2. Click **Deploy new contract** (or paste an existing Preview address into **Join contract**).
 3. Enter a payment amount and click **Lock escrow (customer)** — approve the Lace prove/sign/submit prompts.
 4. Click **Release escrow (courier)** — this is the zero-knowledge step: watch the log and the ledger-state panel update to `RELEASED` without the delivery secret ever appearing anywhere on screen.
 
@@ -122,4 +124,4 @@ web/                  Browser app: Lace wallet connect/disconnect, deploy/join,
 
 ## Status
 
-Level 2 (First Light): contract wired to a real frontend, Lace connected on Preprod, `lockEscrow`/`releaseEscrow` called directly from the browser with proofs generated locally. Multi-party lock/release flows (separate customer and courier wallets/sessions) and a real delivery-proof source (e.g. signed GPS attestations) remain planned for later milestones.
+Level 2 (First Light): contract wired to a real frontend, Lace connected on Preview, `lockEscrow`/`releaseEscrow` called directly from the browser with proofs generated locally. Multi-party lock/release flows (separate customer and courier wallets/sessions) and a real delivery-proof source (e.g. signed GPS attestations) remain planned for later milestones.
