@@ -4,7 +4,7 @@
 
 ## Live Demo
 
-[PASTE LIVE URL AFTER DEPLOYING WITH WRANGLER]
+https://blindroute-web.pages.dev/
 
 ## Contract Address
 
