@@ -10,7 +10,7 @@
 
 | Network | Address |
 |---------|---------|
-| Preview (Level 2) | `[PASTE PREVIEW CONTRACT ADDRESS]` |
+| Preview (Level 2) | `286d5bc368f5973932808cb0d33f4b612821b646dfbe3f044210cbdf0d078185` |
 | Preview (Level 1) | `e7ceb9e25fb84d63f68ffc55b9a4ce2dbe2e7a69873568a901ff86b3d1016ba7` |
 
 > Deployed to **Preview** rather than Preprod — confirmed with the challenge organizers as an acceptable substitute after Preprod's indexer/dust-sponsor infrastructure proved unstable at submission time.
