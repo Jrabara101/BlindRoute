@@ -120,7 +120,7 @@ web/                  Browser app: Lace wallet connect/disconnect, deploy/join,
 
 ## Demo Video
 
-[PLACEHOLDER — link added after recording]
+https://drive.google.com/file/d/1qZjDiemDrKgfOalnyi8PhC3bJP3szs42/view?usp=sharing
 
 ## Status
 
