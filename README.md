@@ -1,5 +1,7 @@
 # BlindRoute
 
+![CI](https://github.com/Jrabara101/BlindRoute/actions/workflows/ci.yml/badge.svg)
+
 > Privacy-preserving delivery escrow on [Midnight](https://midnight.network) — a courier proves delivery in zero knowledge, without the ledger ever learning what that proof was.
 
 ## Live Demo
@@ -101,6 +103,23 @@ npm run preprod-ps   # or: npm run preview-ps
 ```
 
 Its own wallet sync currently hits a bug in the installed `wallet-sdk-facade` version (sync progress never advances past zero while leaking memory). The browser app in `web/` sidesteps this by delegating wallet sync, balancing, signing, and proving to Lace instead of our own wallet code.
+
+## Run Tests
+
+```bash
+cd contract
+npm test
+```
+
+8 vitest cases cover circuit logic (lock/release amounts and commitments), ledger state transitions (EMPTY → LOCKED → RELEASED, including the guard-rail failures for double-locking and double-releasing), and privacy (private state is unchanged and unexposed by any public circuit call).
+
+## CI/CD
+
+`.github/workflows/ci.yml` runs on every push and pull request to `main`: checks out the repo, installs Node.js 22, runs `npm install`, installs the Compact compiler and compiles `contract/src/blindroute.compact`, runs the contract's vitest suite, and typechecks the web app. This catches contract or type regressions before they reach `main`.
+
+## Product Proposal
+
+See [PROPOSAL.md](./PROPOSAL.md).
 
 ## Repository Layout
 
