@@ -107,15 +107,22 @@ Its own wallet sync currently hits a bug in the installed `wallet-sdk-facade` ve
 ## Run Tests
 
 ```bash
+# Contract tests (simulator-based, no network needed)
 cd contract
+npm test
+
+# Application tests (pure web/src logic)
+cd ../web
 npm test
 ```
 
-8 vitest cases cover circuit logic (lock/release amounts and commitments), ledger state transitions (EMPTY → LOCKED → RELEASED, including the guard-rail failures for double-locking and double-releasing), and privacy (private state is unchanged and unexposed by any public circuit call).
+**Contract** — 8 vitest cases cover circuit logic (lock/release amounts and commitments), ledger state transitions (EMPTY → LOCKED → RELEASED, including the guard-rail failures for double-locking and double-releasing), and privacy (private state is unchanged and unexposed by any public circuit call).
+
+**Application** — 11 vitest cases cover `web/src`'s pure logic: `isUserRejection()` (distinguishing a Lace prompt dismissal from other wallet/API errors) and `describeError()` (fixed messaging for rejections, `Error.message` extraction, Effect.js `FiberFailure`/`Cause` unwrapping, and the JSON-stringify fallback for unrecognized error shapes).
 
 ## CI/CD
 
-`.github/workflows/ci.yml` runs on every push and pull request to `main`: checks out the repo, installs Node.js 22, runs `npm install`, installs the Compact compiler and compiles `contract/src/blindroute.compact`, runs the contract's vitest suite, and typechecks the web app. This catches contract or type regressions before they reach `main`.
+`.github/workflows/ci.yml` runs on every push and pull request to `main`: checks out the repo, installs Node.js 22, runs `npm install`, installs the Compact compiler and compiles `contract/src/blindroute.compact`, runs the contract's vitest suite, typechecks the web app, and runs the web app's vitest suite. This catches contract, application, or type regressions before they reach `main`.
 
 ## Product Proposal
 
@@ -135,6 +142,7 @@ web/                  Browser app: Lace wallet connect/disconnect, deploy/join,
   src/wallet.ts        Lace connection, network-mismatch/rejection handling
   src/contract.ts      Providers wiring, deploy/join, circuit calls
   src/main.ts          DOM wiring
+  src/*.test.ts        Application unit tests (vitest, no browser/wallet needed)
 ```
 
 ## Demo Video
@@ -143,4 +151,4 @@ https://drive.google.com/file/d/1qZjDiemDrKgfOalnyi8PhC3bJP3szs42/view?usp=shari
 
 ## Status
 
-Level 2 (First Light): contract wired to a real frontend, Lace connected on Preview, `lockEscrow`/`releaseEscrow` called directly from the browser with proofs generated locally. Multi-party lock/release flows (separate customer and courier wallets/sessions) and a real delivery-proof source (e.g. signed GPS attestations) remain planned for later milestones.
+Level 3: contract wired to a real frontend, Lace connected on Preview, `lockEscrow`/`releaseEscrow` called directly from the browser with proofs generated locally, contract + application test suites both passing in CI on every push, and a submitted product proposal (see [PROPOSAL.md](./PROPOSAL.md)). Multi-party lock/release flows (separate customer and courier wallets/sessions) and a real delivery-proof source (e.g. signed GPS attestations) remain planned for later milestones.
