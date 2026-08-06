@@ -1,6 +1,7 @@
 # Product Proposal
 
 **Idea category:** Private Payroll / Splits — *distribute funds without exposing amounts [or the condition that releases them]*
+**Submission category (Level 4-6 idea submission):** Payments
 
 ## What is the product, and who uses it?
 
@@ -36,3 +37,13 @@ Yes, this is realistic to reach Mainnet by Level 6, with scope growing increment
 - **Now (Level 2–3):** single-escrow contract, one payer/payee pair, browser-driven via Lace, proofs generated client-side. This already demonstrates the full selective-disclosure pattern end-to-end.
 - **Near-term (Level 4–5):** generalize from one escrow per contract instance to a keyed/multi-escrow registry (many concurrent payer/payee pairs sharing one deployed contract), add a dispute/timeout/refund path (payer reclaims funds if the condition is never met), and replace the placeholder "delivery-proof secret" with a real attestation source (e.g., a signed message from a delivery/logistics API or an oracle) so the commitment corresponds to a verifiable real-world event rather than an arbitrary shared secret.
 - **Mainnet-track concerns:** proving time for `releaseEscrow` (currently the larger of the two circuits) needs to stay usable on real hardware/wallets at scale; multi-escrow state growth needs a sensible on-chain indexing strategy; and the trust model for *how* the off-chain condition (delivery, task completion, milestone) is attested needs to be pluggable rather than hard-coded, so the same contract pattern can serve logistics, gig-work payroll, and DAO milestone payments without redeployment. None of these are blocking — they're incremental hardening of a pattern that already works.
+
+## Level 4-6 Idea Submission
+
+**What is the idea?** Scale BlindRoute from a single-escrow proof of concept into a multi-party private payroll/splits system, while keeping the same privacy guarantee: amounts and the fact that a release occurred stay public and auditable, but *who* was paid for *what specific private reason* never does. Three concrete additions carry the contract from Level 2-3 to Level 4-6:
+
+1. **Multi-party registry.** Replace the single global `state`/`amount`/`deliveryCommitment` ledger fields with a keyed registry (escrow ID → record), so one deployed contract supports many concurrent payer/payee pairs instead of one escrow per deployment — the difference between a demo and an actual payroll system.
+2. **Dispute / timeout / refund path.** Add a circuit letting the payer reclaim locked funds if the release condition is never satisfied within a bound (e.g. a ledger-time or sequence-based deadline), closing the current gap where funds lock permanently if the payee never claims them.
+3. **Pluggable attestation source.** Replace the placeholder shared-secret commitment with a real verifiable attestation — a signed milestone confirmation, a delivery/logistics API signature, or an oracle-fed proof — so `commitmentOf` binds to an actual verifiable real-world event rather than an arbitrary pre-agreed secret.
+
+**Why this stays a Midnight problem, not just a bigger Solidity contract:** a transparent chain can implement a multi-party escrow registry trivially, but only by publishing every release condition and every payee's claim data permanently on-chain. Midnight's selective disclosure is what lets the registry scale in *volume* (many escrows, many parties) without scaling in *disclosure* — the ZK proof obligation on each release stays the same regardless of how many other parties are using the same deployed contract.
