@@ -38,3 +38,7 @@ jobs:
       - name: Typecheck web app
         working-directory: web
         run: npm run typecheck
+
+      - name: Run web app test suite
+        working-directory: web
+        run: npm test
