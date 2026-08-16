@@ -122,7 +122,11 @@ npm test
 
 ## CI/CD
 
-`.github/workflows/ci.yml` runs on every push and pull request to `main`: checks out the repo, installs Node.js 22, runs `npm install`, installs the Compact compiler and compiles `contract/src/blindroute.compact`, runs the contract's vitest suite, typechecks the web app, and runs the web app's vitest suite. This catches contract, application, or type regressions before they reach `main`.
+`.github/workflows/ci.yml` runs on every push and pull request to `main`: checks out the repo, installs Node.js 22, runs `npm install`, installs the Compact compiler (pinning a default version with `compact update`), compiles `contract/src/blindroute.compact`, runs the contract's vitest suite, builds the `contract` package (so `web` can resolve it as a workspace dependency), typechecks the web app, and runs the web app's vitest suite. This catches contract, application, or type regressions before they reach `main`.
+
+## Usage Guide
+
+Plain-English, step-by-step instructions for using the deployed app (no code required): see [docs/USAGE.md](./docs/USAGE.md).
 
 ## Product Proposal
 
