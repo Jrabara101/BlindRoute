@@ -26,14 +26,20 @@ jobs:
           curl --proto '=https' --tlsv1.2 -LsSf https://github.com/midnightntwrk/compact/releases/latest/download/compact-installer.sh | sh
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
+      - name: Set default Compact compiler version
+        run: compact update
+
       - name: Compile contract
         working-directory: contract
         run: npm run compact
-        continue-on-error: true
 
       - name: Run contract test suite
         working-directory: contract
         run: npm test
+
+      - name: Build contract package
+        working-directory: contract
+        run: npm run build
 
       - name: Typecheck web app
         working-directory: web
