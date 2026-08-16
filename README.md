@@ -153,6 +153,10 @@ web/                  Browser app: Lace wallet connect/disconnect, deploy/join,
 
 https://drive.google.com/file/d/1qZjDiemDrKgfOalnyi8PhC3bJP3szs42/view?usp=sharing
 
+## Product X Profile
+
+[PLACEHOLDER — add the X/Twitter profile URL here after creating the account and posting the launch thread]
+
 ## Status
 
 Level 3: contract wired to a real frontend, Lace connected on Preview, `lockEscrow`/`releaseEscrow` called directly from the browser with proofs generated locally, contract + application test suites both passing in CI on every push, and a submitted product proposal (see [PROPOSAL.md](./PROPOSAL.md)). Multi-party lock/release flows (separate customer and courier wallets/sessions) and a real delivery-proof source (e.g. signed GPS attestations) remain planned for later milestones.
