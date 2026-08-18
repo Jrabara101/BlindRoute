@@ -155,7 +155,7 @@ https://drive.google.com/file/d/1qZjDiemDrKgfOalnyi8PhC3bJP3szs42/view?usp=shari
 
 ## Product X Profile
 
-[PLACEHOLDER — add the X/Twitter profile URL here after creating the account and posting the launch thread]
+https://x.com/JRABARA1
 
 ## Status
 
