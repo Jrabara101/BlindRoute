@@ -39,6 +39,84 @@ const joinButton = document.getElementById('join') as HTMLButtonElement;
 const lockAmountInput = document.getElementById('lock-amount') as HTMLInputElement;
 const lockButton = document.getElementById('lock') as HTMLButtonElement;
 const releaseButton = document.getElementById('release') as HTMLButtonElement;
+const proceedToReleaseButton = document.getElementById('proceed-to-release') as HTMLButtonElement;
+
+// ── Stage / step-tracker rendering ──────────────────────────────────────────
+type Stage = 'disconnected' | 'connected' | 'empty' | 'locking' | 'locked' | 'releasing' | 'released' | 'error';
+
+const STEP_FOR_STAGE: Record<Stage, 'connect' | 'contract' | 'lock' | 'release'> = {
+  disconnected: 'connect',
+  connected: 'contract',
+  empty: 'lock',
+  locking: 'lock',
+  locked: 'lock',
+  releasing: 'release',
+  released: 'release',
+  error: 'connect',
+};
+
+const STEP_ORDER = ['connect', 'contract', 'lock', 'release'] as const;
+
+const showStage = (stage: Stage): void => {
+  document.querySelectorAll<HTMLElement>('[data-stage]').forEach((el) => {
+    el.classList.toggle('is-active', el.dataset.stage === stage);
+  });
+
+  const activeStep = STEP_FOR_STAGE[stage];
+  const activeIdx = STEP_ORDER.indexOf(activeStep);
+  // A stage counts its own step "done" once escrow is LOCKED or RELEASED (terminal for that step).
+  const doneIdx = stage === 'locked' || stage === 'releasing' || stage === 'released' ? STEP_ORDER.indexOf('lock') : activeIdx - 1;
+
+  document.querySelectorAll<HTMLElement>('.step-node').forEach((node) => {
+    const step = node.dataset.step as (typeof STEP_ORDER)[number];
+    const idx = STEP_ORDER.indexOf(step);
+    const circle = node.querySelector('.step-circle') as HTMLElement;
+    const check = node.querySelector('.step-check') as HTMLElement;
+    const num = node.querySelector('.step-num') as HTMLElement;
+    const label = node.querySelector('.step-label') as HTMLElement;
+    circle.classList.remove('step-pending', 'border-public-zone', 'border-private-zone', 'bg-public-zone', 'text-public-zone');
+    label.classList.remove('step-pending', 'text-public-zone', 'text-private-zone');
+
+    if (idx <= doneIdx) {
+      circle.classList.add('border-public-zone', 'text-public-zone');
+      label.classList.add('text-public-zone');
+      check.classList.remove('hidden');
+      num.classList.add('hidden');
+    } else if (idx === activeIdx) {
+      const zoneColor = stage === 'releasing' || stage === 'empty' || stage === 'locking' ? 'private-zone' : 'public-zone';
+      circle.classList.add(`border-${zoneColor}`, `text-${zoneColor}`);
+      label.classList.add(`text-${zoneColor}`);
+      check.classList.add('hidden');
+      num.classList.remove('hidden');
+    } else {
+      circle.classList.add('step-pending');
+      label.classList.add('step-pending');
+      check.classList.add('hidden');
+      num.classList.remove('hidden');
+    }
+  });
+
+  document.querySelectorAll<HTMLElement>('.nav-link, .nav-link-mobile').forEach((link) => {
+    const isActive = link.dataset.nav === activeStep;
+    link.classList.toggle('text-primary', isActive);
+    link.classList.toggle('text-on-surface-variant', !isActive);
+    link.classList.toggle('bg-primary/10', isActive);
+  });
+
+  const ledgerCards = document.getElementById('ledger-cards');
+  const releaseRow = document.getElementById('release-action-row');
+  const showPersistentCards = stage !== 'disconnected' && stage !== 'connected';
+  ledgerCards?.classList.toggle('hidden', !showPersistentCards);
+  ledgerCards?.classList.toggle('grid', showPersistentCards);
+  releaseRow?.classList.toggle('hidden', stage !== 'locked');
+  releaseRow?.classList.toggle('flex', stage === 'locked');
+};
+
+const showError = (message: string): void => {
+  const el = document.getElementById('error-message');
+  if (el) el.textContent = message;
+  showStage('error');
+};
 
 // ── Session state ────────────────────────────────────────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -50,6 +128,13 @@ let activeContractAddress: string | undefined;
 // Never rendered to the DOM or logged — only its public commitment hash is.
 let privateState: BlindRoutePrivateState | undefined;
 
+const truncateHex = (hex: string): string => (hex.length > 14 ? `${hex.slice(0, 6)}...${hex.slice(-4)}` : hex);
+
+const setEl = (id: string, text: string): void => {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text;
+};
+
 const resetToDisconnected = (): void => {
   connection = undefined;
   providers = undefined;
@@ -59,7 +144,12 @@ const resetToDisconnected = (): void => {
 
   connectButton.disabled = false;
   disconnectButton.disabled = true;
-  setStatus('wallet-status', 'Not connected.');
+  setStatus('wallet-status', '');
+  const pill = document.getElementById('wallet-status-pill');
+  if (pill) pill.textContent = 'Not Connected';
+  const dot = document.getElementById('network-dot');
+  dot?.classList.remove('bg-public-zone');
+  dot?.classList.add('bg-surface-variant');
 
   deployButton.disabled = true;
   joinAddressInput.disabled = true;
@@ -69,25 +159,34 @@ const resetToDisconnected = (): void => {
   lockAmountInput.disabled = true;
   lockButton.disabled = true;
   releaseButton.disabled = true;
-  setStatus('escrow-status', '—');
-  setStatus('ledger-state', 'No ledger state yet.');
+  setStatus('escrow-status', '');
+  setStatus('escrow-status-empty', '');
+
+  showStage('disconnected');
 };
 
 const refreshLedgerState = async (): Promise<void> => {
   if (!activeContractAddress) return;
-  const ledgerEl = document.getElementById('ledger-state');
-  if (!ledgerEl) return;
   const escrow = await getEscrowLedgerState(providers, activeContractAddress);
   if (escrow === null) {
-    ledgerEl.textContent = 'No contract state found at this address.';
+    log('No contract state found at this address.');
     return;
   }
-  ledgerEl.textContent = JSON.stringify({ ...escrow, amount: escrow.amount.toString() }, null, 2);
+
+  setEl('ledger-status', escrow.state);
+  setEl('ledger-amount', escrow.amount.toString());
+  setEl('ledger-commitment', truncateHex(escrow.deliveryCommitment));
+  setEl('ledger-courier', truncateHex(escrow.courier));
+  setEl('ledger-contract-id', truncateHex(activeContractAddress));
 
   // Public ledger state drives which circuit makes sense to call next.
   lockButton.disabled = escrow.state !== 'EMPTY';
   lockAmountInput.disabled = escrow.state !== 'EMPTY';
   releaseButton.disabled = escrow.state !== 'LOCKED';
+
+  if (escrow.state === 'EMPTY') showStage('empty');
+  else if (escrow.state === 'LOCKED') showStage('locked');
+  else if (escrow.state === 'RELEASED') showStage('released');
 };
 
 // ── Wallet connect / disconnect ──────────────────────────────────────────────
@@ -105,15 +204,21 @@ connectButton.addEventListener('click', () => {
       providers = await buildProviders(connection.api, configuration);
 
       setStatus('wallet-status', `connected: ${connection.unshieldedAddress}`, 'ok');
+      const pill = document.getElementById('wallet-status-pill');
+      if (pill) pill.textContent = truncateHex(connection.unshieldedAddress);
+      document.getElementById('network-dot')?.classList.remove('bg-surface-variant');
+      document.getElementById('network-dot')?.classList.add('bg-public-zone');
+
       disconnectButton.disabled = false;
       deployButton.disabled = false;
       joinAddressInput.disabled = false;
       joinButton.disabled = false;
+      showStage('connected');
     } catch (e) {
       const msg = describeError(e);
-      setStatus('wallet-status', `failed: ${msg}`, 'error');
       log(`Connect error: ${msg}`);
       connectButton.disabled = false;
+      showError(msg);
     }
   })();
 });
@@ -143,7 +248,7 @@ deployButton.addEventListener('click', () => {
     if (!providers) return;
     deployButton.disabled = true;
     joinButton.disabled = true;
-    setStatus('contract-status', 'deploying... (this can take 20-30s)');
+    setStatus('contract-status', 'Deploying... (this can take 20-30s)');
     try {
       privateState = generateBlindRoutePrivateState();
       const deployed = await deploy(providers, privateState);
@@ -152,8 +257,8 @@ deployButton.addEventListener('click', () => {
       activateContract(deployed, address);
     } catch (e) {
       const msg = describeError(e);
-      setStatus('contract-status', `deploy failed: ${msg}`, 'error');
       log(`Deploy error: ${msg}`);
+      showError(msg);
     } finally {
       deployButton.disabled = false;
       joinButton.disabled = false;
@@ -171,7 +276,7 @@ joinButton.addEventListener('click', () => {
     }
     deployButton.disabled = true;
     joinButton.disabled = true;
-    setStatus('contract-status', 'joining...');
+    setStatus('contract-status', 'Joining...');
     try {
       // A fresh private state means release will only succeed if this same
       // session also locked the escrow (its deliveryProofSecret must match
@@ -182,8 +287,8 @@ joinButton.addEventListener('click', () => {
       activateContract(found, address);
     } catch (e) {
       const msg = describeError(e);
-      setStatus('contract-status', `join failed: ${msg}`, 'error');
       log(`Join error: ${msg}`);
+      showError(msg);
     } finally {
       deployButton.disabled = false;
       joinButton.disabled = false;
@@ -198,43 +303,45 @@ lockButton.addEventListener('click', () => {
     const amountStr = lockAmountInput.value.trim();
     const paymentAmount = BigInt(amountStr || '0');
     if (paymentAmount <= 0n) {
-      setStatus('escrow-status', 'Enter a payment amount greater than zero.', 'error');
+      setStatus('escrow-status-empty', 'Enter a payment amount greater than zero.', 'error');
       return;
     }
     lockButton.disabled = true;
-    setStatus('escrow-status', 'locking escrow... (generating proof locally)');
+    showStage('locking');
     try {
       // The commitment is a public hash — safe to log. The secret behind it never is.
       const commitment = commitmentOf(privateState.deliveryProofSecret);
       log(`Commitment (public, hex): ${Buffer.from(commitment).toString('hex')}`);
       const result = await lockEscrow(activeContract, paymentAmount, commitment);
       log(`Lock tx ${result.public.txId} included at block ${result.public.blockHeight}`);
-      setStatus('escrow-status', `Escrow locked for ${paymentAmount}.`, 'ok');
       await refreshLedgerState();
     } catch (e) {
       const msg = describeError(e);
-      setStatus('escrow-status', `lock failed: ${msg}`, 'error');
       log(`Lock error: ${msg}`);
       lockButton.disabled = false;
+      showError(msg);
     }
   })();
+});
+
+proceedToReleaseButton.addEventListener('click', () => {
+  showStage('locked');
 });
 
 releaseButton.addEventListener('click', () => {
   void (async () => {
     if (!activeContract) return;
     releaseButton.disabled = true;
-    setStatus('escrow-status', 'releasing escrow... (proving delivery locally — this can take a while)');
+    showStage('releasing');
     try {
       const result = await releaseEscrow(activeContract);
       log(`Release tx ${result.public.txId} included at block ${result.public.blockHeight}`);
-      setStatus('escrow-status', 'Escrow released — proved without revealing your input.', 'ok');
       await refreshLedgerState();
     } catch (e) {
       const msg = describeError(e);
-      setStatus('escrow-status', `release failed: ${msg}`, 'error');
       log(`Release error: ${msg}`);
       releaseButton.disabled = false;
+      showError(msg);
     }
   })();
 });
