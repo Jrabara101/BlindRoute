@@ -27,7 +27,10 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Set default Compact compiler version
-        run: compact update
+        # Pinned rather than tracking latest: toolchain 0.33.0 (2026-08-17) emits code
+        # requiring compact-runtime 0.18.0-rc.1, ahead of the 0.16.0 our SDK deps resolve
+        # to. 0.31.1 is the last version confirmed compatible with our pinned dependency tree.
+        run: compact update 0.31.1
 
       - name: Compile contract
         working-directory: contract
