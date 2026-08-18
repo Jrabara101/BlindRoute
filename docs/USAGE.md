@@ -8,7 +8,7 @@ unlocks it by proving — without revealing — that they know the secret behind
 - The [Lace wallet](https://chromewebstore.google.com/detail/lace/gafhhkghbfjjkeiendhlofajokpaflmk) browser extension, installed and set to the **Preview** network
 - Some test funds in that Lace wallet from the [Preview faucet](https://faucet.preview.midnight.network/)
 - A Chromium-based browser (Chrome, Brave, Edge) with only Lace active as your Midnight wallet extension — having a second Midnight-wallet extension enabled at the same time can cause a "wallet not found" error
-- The BlindRoute app open in your browser (the [live demo](https://blindroute-web.pages.dev/), or your own local copy — see the main [README](../README.md))
+- The BlindRoute app open in your browser (the [live demo](https://blindroute-web.surge.sh/), or your own local copy — see the main [README](../README.md))
 
 You do **not** need to install anything else, run a node, or write any code to use the app.
 

@@ -91,10 +91,6 @@ jobs:
         working-directory: web
         run: npm run build
 
-      - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: web
-          command: pages deploy dist --project-name=blindroute-web
+      - name: Deploy to Surge
+        working-directory: web
+        run: npx surge dist blindroute-web.surge.sh --token ${{ secrets.SURGE_TOKEN }}

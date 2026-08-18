@@ -6,7 +6,7 @@
 
 ## Live Demo
 
-https://blindroute-web.pages.dev/
+https://blindroute-web.surge.sh/
 
 ## Contract Address
 
@@ -46,7 +46,7 @@ An on-chain observer watching this contract sees: an escrow appear with a paymen
 
 ## Tech Stack
 
-Midnight network, [Compact](https://docs.midnight.network/relnotes/compact), Midnight.js SDK, Midnight DApp Connector API, Vite + TypeScript, Lace wallet, Cloudflare Pages (Wrangler).
+Midnight network, [Compact](https://docs.midnight.network/relnotes/compact), Midnight.js SDK, Midnight DApp Connector API, Vite + TypeScript, Lace wallet, Surge.
 
 ## Prerequisites
 
@@ -85,12 +85,12 @@ Open the printed local URL, then:
 - "Insufficient funds: dust" → the wallet needs its NIGHT registered for DUST generation first; use Lace's dust-designation action and wait for it to accumulate.
 - Release feels stuck → `releaseEscrow`'s proving key is ~5MB (vs. ~150KB for `lockEscrow`), so local proof generation is noticeably slower. This is expected.
 
-### Deploy the frontend (Cloudflare Pages via Wrangler)
+### Deploy the frontend (Surge)
 
 ```bash
 cd web
-npx wrangler login        # first time only
-npm run deploy            # builds, then `wrangler pages deploy`
+npx surge login            # first time only
+npm run deploy             # builds, then `surge dist blindroute-web.surge.sh`
 ```
 
 ### CLI (alternate deploy path)
@@ -125,7 +125,7 @@ npm test
 `.github/workflows/ci.yml` has two jobs:
 
 - **test** — runs on every push and pull request to `main`: checks out the repo, installs Node.js 22, runs `npm install`, installs the Compact compiler (pinned to `0.31.1` — see comment in the workflow for why it's pinned rather than tracking latest), compiles `contract/src/blindroute.compact`, runs the contract's vitest suite, builds the `contract` package (so `web` can resolve it as a workspace dependency), typechecks the web app, and runs the web app's vitest suite. This catches contract, application, or type regressions before they reach `main`.
-- **deploy** — runs only on pushes to `main`, after `test` passes: rebuilds the contract and web app, then deploys `web/dist` to Cloudflare Pages via `wrangler pages deploy`. Requires `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` configured as repository secrets (Settings → Secrets and variables → Actions).
+- **deploy** — runs only on pushes to `main`, after `test` passes: rebuilds the contract and web app, then deploys `web/dist` to [Surge](https://surge.sh) at `blindroute-web.surge.sh`. Requires `SURGE_TOKEN` configured as a repository secret (Settings → Secrets and variables → Actions) — get it by running `npx surge token` after `npx surge login`.
 
 ## Usage Guide
 

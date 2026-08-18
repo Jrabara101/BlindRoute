@@ -10,7 +10,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "preview": "vite preview",
-    "deploy": "npm run build && wrangler pages deploy"
+    "deploy": "npm run build && surge dist blindroute-web.surge.sh"
   },
   "dependencies": {
     "@midnight-ntwrk/blindroute-contract": "*",
@@ -19,8 +19,8 @@
     "buffer": "^6.0.3"
   },
   "devDependencies": {
+    "surge": "^0.24.7",
     "vite": "^8.1.4",
-    "vite-plugin-wasm": "^3.6.0",
-    "wrangler": "^4.0.0"
+    "vite-plugin-wasm": "^3.6.0"
   }
 }
