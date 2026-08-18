@@ -122,7 +122,10 @@ npm test
 
 ## CI/CD
 
-`.github/workflows/ci.yml` runs on every push and pull request to `main`: checks out the repo, installs Node.js 22, runs `npm install`, installs the Compact compiler (pinning a default version with `compact update`), compiles `contract/src/blindroute.compact`, runs the contract's vitest suite, builds the `contract` package (so `web` can resolve it as a workspace dependency), typechecks the web app, and runs the web app's vitest suite. This catches contract, application, or type regressions before they reach `main`.
+`.github/workflows/ci.yml` has two jobs:
+
+- **test** — runs on every push and pull request to `main`: checks out the repo, installs Node.js 22, runs `npm install`, installs the Compact compiler (pinned to `0.31.1` — see comment in the workflow for why it's pinned rather than tracking latest), compiles `contract/src/blindroute.compact`, runs the contract's vitest suite, builds the `contract` package (so `web` can resolve it as a workspace dependency), typechecks the web app, and runs the web app's vitest suite. This catches contract, application, or type regressions before they reach `main`.
+- **deploy** — runs only on pushes to `main`, after `test` passes: rebuilds the contract and web app, then deploys `web/dist` to Cloudflare Pages via `wrangler pages deploy`. Requires `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` configured as repository secrets (Settings → Secrets and variables → Actions).
 
 ## Usage Guide
 
