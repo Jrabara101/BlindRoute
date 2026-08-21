@@ -13,7 +13,9 @@ import {
   getEscrowLedgerState,
   join,
   lockEscrow,
+  refundEscrow,
   releaseEscrow,
+  tick,
 } from './contract';
 import { describeError } from './errors';
 
@@ -37,8 +39,11 @@ const deployButton = document.getElementById('deploy') as HTMLButtonElement;
 const joinAddressInput = document.getElementById('join-address') as HTMLInputElement;
 const joinButton = document.getElementById('join') as HTMLButtonElement;
 const lockAmountInput = document.getElementById('lock-amount') as HTMLInputElement;
+const lockRefundTicksInput = document.getElementById('lock-refund-ticks') as HTMLInputElement;
 const lockButton = document.getElementById('lock') as HTMLButtonElement;
 const releaseButton = document.getElementById('release') as HTMLButtonElement;
+const refundButton = document.getElementById('refund') as HTMLButtonElement;
+const tickButton = document.getElementById('tick') as HTMLButtonElement;
 const proceedToReleaseButton = document.getElementById('proceed-to-release') as HTMLButtonElement;
 
 // ── Stage / step-tracker rendering ──────────────────────────────────────────
@@ -157,8 +162,11 @@ const resetToDisconnected = (): void => {
   setStatus('contract-status', 'No contract active.');
 
   lockAmountInput.disabled = true;
+  lockRefundTicksInput.disabled = true;
   lockButton.disabled = true;
   releaseButton.disabled = true;
+  refundButton.disabled = true;
+  tickButton.disabled = true;
   setStatus('escrow-status', '');
   setStatus('escrow-status-empty', '');
 
@@ -177,12 +185,19 @@ const refreshLedgerState = async (): Promise<void> => {
   setEl('ledger-amount', escrow.amount.toString());
   setEl('ledger-commitment', truncateHex(escrow.deliveryCommitment));
   setEl('ledger-courier', truncateHex(escrow.courier));
+  setEl('ledger-clock', `${escrow.clock} / ${escrow.refundDeadline}`);
   setEl('ledger-contract-id', truncateHex(activeContractAddress));
 
   // Public ledger state drives which circuit makes sense to call next.
   lockButton.disabled = escrow.state !== 'EMPTY';
   lockAmountInput.disabled = escrow.state !== 'EMPTY';
+  lockRefundTicksInput.disabled = escrow.state !== 'EMPTY';
   releaseButton.disabled = escrow.state !== 'LOCKED';
+  tickButton.disabled = escrow.state !== 'LOCKED';
+  // The button stays enabled once LOCKED even before the deadline passes —
+  // the contract itself is the source of truth and will reject an early
+  // refund attempt with a clear on-chain assertion error.
+  refundButton.disabled = escrow.state !== 'LOCKED';
 
   if (escrow.state === 'EMPTY') showStage('empty');
   else if (escrow.state === 'LOCKED') showStage('locked');
@@ -306,13 +321,15 @@ lockButton.addEventListener('click', () => {
       setStatus('escrow-status-empty', 'Enter a payment amount greater than zero.', 'error');
       return;
     }
+    const refundTicksStr = lockRefundTicksInput.value.trim();
+    const refundTicks = BigInt(refundTicksStr || '0');
     lockButton.disabled = true;
     showStage('locking');
     try {
       // The commitment is a public hash — safe to log. The secret behind it never is.
       const commitment = commitmentOf(privateState.deliveryProofSecret);
       log(`Commitment (public, hex): ${Buffer.from(commitment).toString('hex')}`);
-      const result = await lockEscrow(activeContract, paymentAmount, commitment);
+      const result = await lockEscrow(activeContract, paymentAmount, commitment, refundTicks);
       log(`Lock tx ${result.public.txId} included at block ${result.public.blockHeight}`);
       await refreshLedgerState();
     } catch (e) {
@@ -342,6 +359,44 @@ releaseButton.addEventListener('click', () => {
       log(`Release error: ${msg}`);
       releaseButton.disabled = false;
       showError(msg);
+    }
+  })();
+});
+
+// tick() carries no funds and needs no private witness — it's the public,
+// auditable trigger that eventually lets refundEscrow succeed.
+tickButton.addEventListener('click', () => {
+  void (async () => {
+    if (!activeContract) return;
+    tickButton.disabled = true;
+    try {
+      const result = await tick(activeContract);
+      log(`Tick tx ${result.public.txId} included at block ${result.public.blockHeight}`);
+      await refreshLedgerState();
+    } catch (e) {
+      const msg = describeError(e);
+      log(`Tick error: ${msg}`);
+      showError(msg);
+    } finally {
+      tickButton.disabled = false;
+    }
+  })();
+});
+
+refundButton.addEventListener('click', () => {
+  void (async () => {
+    if (!activeContract) return;
+    refundButton.disabled = true;
+    try {
+      const result = await refundEscrow(activeContract);
+      log(`Refund tx ${result.public.txId} included at block ${result.public.blockHeight}`);
+      await refreshLedgerState();
+    } catch (e) {
+      const msg = describeError(e);
+      log(`Refund error: ${msg}`);
+      showError(msg);
+    } finally {
+      refundButton.disabled = false;
     }
   })();
 });

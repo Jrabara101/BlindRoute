@@ -1,6 +1,7 @@
-// Contract-side logic: providers wiring, deploy/join, and the two circuits
-// (lockEscrow, releaseEscrow). Mirrors cli/src/api.ts, but with a Lace
-// ConnectedAPI standing in for the CLI's own wallet-sdk-facade wallet.
+// Contract-side logic: providers wiring, deploy/join, and the escrow
+// circuits (lockEscrow, releaseEscrow, refundEscrow, tick). Mirrors
+// cli/src/api.ts, but with a Lace ConnectedAPI standing in for the CLI's
+// own wallet-sdk-facade wallet.
 
 import type { ConnectedAPI, Configuration } from '@midnight-ntwrk/dapp-connector-api';
 import { FetchZkConfigProvider } from '@midnight-ntwrk/midnight-js-fetch-zk-config-provider';
@@ -31,6 +32,8 @@ export interface EscrowLedgerState {
   amount: bigint;
   deliveryCommitment: string;
   courier: string;
+  clock: bigint;
+  refundDeadline: bigint;
 }
 
 /** Generates a fresh set of BlindRoute private-state secrets (courier key + delivery-proof secret). */
@@ -56,7 +59,7 @@ export const commitmentOf = (proof: Uint8Array): Uint8Array => BlindRoute.pureCi
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const buildProviders = async (connectedApi: ConnectedAPI, configuration: Configuration): Promise<any> => {
-  const zkConfigProvider = new FetchZkConfigProvider<'lockEscrow' | 'releaseEscrow'>(
+  const zkConfigProvider = new FetchZkConfigProvider<'lockEscrow' | 'releaseEscrow' | 'refundEscrow' | 'tick'>(
     window.location.origin,
     fetch.bind(window),
   );
@@ -110,11 +113,22 @@ export const join = (providers: any, contractAddress: string, privateState: Blin
   });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const lockEscrow = (contract: any, paymentAmount: bigint, commitment: Uint8Array) =>
-  contract.callTx.lockEscrow(paymentAmount, commitment);
+export const lockEscrow = (
+  contract: any,
+  paymentAmount: bigint,
+  commitment: Uint8Array,
+  refundTicks: bigint,
+) => contract.callTx.lockEscrow(paymentAmount, commitment, refundTicks);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const releaseEscrow = (contract: any) => contract.callTx.releaseEscrow();
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const refundEscrow = (contract: any) => contract.callTx.refundEscrow();
+
+/** Advances the contract's shared tick counter by one — the public, auditable trigger that eventually unlocks refundEscrow. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const tick = (contract: any) => contract.callTx.tick();
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const getEscrowLedgerState = async (
@@ -129,5 +143,7 @@ export const getEscrowLedgerState = async (
     amount: escrow.amount,
     deliveryCommitment: toHex(Buffer.from(escrow.deliveryCommitment)),
     courier: toHex(Buffer.from(escrow.courier)),
+    clock: escrow.clock,
+    refundDeadline: escrow.refundDeadline,
   };
 };

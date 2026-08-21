@@ -200,6 +200,13 @@
             </div>
           </div>
           <div class="pl-4">
+            <label class="font-label-caps text-label-caps text-on-surface-variant block mb-3">REFUND DEADLINE (TICKS)</label>
+            <p class="font-body-md text-body-md text-text-muted max-w-lg mb-3">How many <code>tick()</code> calls must occur before you can reclaim these funds yourself if the courier never releases them. See the Release stage for the shared clock and the Reclaim Funds action.</p>
+            <div class="relative bg-surface-container-low border border-surface-bright rounded-xl overflow-hidden focus-within:border-private-zone transition-colors">
+              <input id="lock-refund-ticks" type="number" min="0" disabled placeholder="10" class="w-full bg-transparent border-none text-on-surface font-crypto-lg text-crypto-lg p-6 focus:ring-0 placeholder-text-muted/50" />
+            </div>
+          </div>
+          <div class="pl-4">
             <button id="lock" disabled class="w-full bg-private-zone text-on-secondary py-4 rounded-xl font-label-caps text-label-caps hover:opacity-90 transition-opacity flex items-center justify-center gap-3 disabled:opacity-40 disabled:cursor-not-allowed">
               <span class="material-symbols-outlined" data-weight="fill">lock</span>
               LOCK ESCROW
@@ -277,7 +284,15 @@
         </section>
 
         <!-- Escrow action row (visible once a contract is active — houses lock/release triggers for locked-state courier action) -->
-        <div id="release-action-row" class="hidden justify-end">
+        <div id="release-action-row" class="hidden justify-end flex-wrap gap-3">
+          <button id="tick" disabled class="border border-surface-bright text-on-surface px-6 py-4 rounded-xl font-label-caps text-label-caps hover:bg-surface-container-high transition-colors flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed">
+            <span class="material-symbols-outlined text-sm">schedule</span>
+            ADVANCE CLOCK
+          </button>
+          <button id="refund" disabled class="border border-error-red/40 text-error-red px-6 py-4 rounded-xl font-label-caps text-label-caps hover:bg-error-red/10 transition-colors flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed">
+            <span class="material-symbols-outlined text-sm">undo</span>
+            RECLAIM FUNDS (PAYER)
+          </button>
           <button id="release" disabled class="bg-private-zone text-on-secondary px-8 py-4 rounded-xl font-label-caps text-label-caps hover:opacity-90 transition-opacity flex items-center gap-3 disabled:opacity-40 disabled:cursor-not-allowed">
             <span class="material-symbols-outlined" data-weight="fill">key</span>
             RELEASE ESCROW (COURIER)
@@ -295,6 +310,7 @@
               <div class="flex justify-between items-center border-b border-surface-bright/40 pb-2"><span class="text-text-muted">Amount</span><span id="ledger-amount" class="text-on-surface">—</span></div>
               <div class="flex justify-between items-center border-b border-surface-bright/40 pb-2"><span class="text-text-muted">Commitment</span><span id="ledger-commitment" class="text-public-zone truncate max-w-[150px]">—</span></div>
               <div class="flex justify-between items-center border-b border-surface-bright/40 pb-2"><span class="text-text-muted">Courier</span><span id="ledger-courier" class="text-on-surface truncate max-w-[150px]">—</span></div>
+              <div class="flex justify-between items-center border-b border-surface-bright/40 pb-2"><span class="text-text-muted">Clock / Refund deadline</span><span id="ledger-clock" class="text-on-surface truncate max-w-[150px]">—</span></div>
               <div class="flex justify-between items-center pt-2"><span class="text-text-muted">Contract</span><span id="ledger-contract-id" class="text-on-surface truncate max-w-[150px]">—</span></div>
             </div>
           </div>
