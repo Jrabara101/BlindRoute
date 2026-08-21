@@ -60,8 +60,10 @@ ${DIVIDER}
 ${DIVIDER}
   [1] Lock escrow (deposit + delivery commitment)
   [2] Release escrow (prove delivery, claim payment)
-  [3] Display current escrow state
-  [4] Exit
+  [3] Advance clock (tick — required before a refund deadline can pass)
+  [4] Reclaim escrow as payer (refund, once the deadline has passed)
+  [5] Display current escrow state
+  [6] Exit
 ${'─'.repeat(62)}
 > `;
 
@@ -220,8 +222,14 @@ const mainLoop = async (providers: BlindRouteProviders, walletCtx: api.WalletCon
         try {
           const amountStr = await rli.question('  Payment amount (integer): ');
           const paymentAmount = BigInt(amountStr.trim());
+          const refundTicksStr = await rli.question(
+            '  Refund deadline, in ticks (0 = refundable immediately, blank = never expect a refund): ',
+          );
+          const refundTicks = BigInt(refundTicksStr.trim() || '0');
           const commitment = api.commitmentOf(privateState.deliveryProofSecret);
-          await api.withStatus('Locking escrow', () => api.lockEscrow(blindRouteContract, paymentAmount, commitment));
+          await api.withStatus('Locking escrow', () =>
+            api.lockEscrow(blindRouteContract, paymentAmount, commitment, refundTicks),
+          );
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
           console.log(`  ✗ Lock failed: ${msg}\n`);
@@ -236,9 +244,25 @@ const mainLoop = async (providers: BlindRouteProviders, walletCtx: api.WalletCon
         }
         break;
       case '3':
-        await api.displayEscrowState(providers, blindRouteContract);
+        try {
+          await api.withStatus('Advancing clock', () => api.tick(blindRouteContract));
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          console.log(`  ✗ Tick failed: ${msg}\n`);
+        }
         break;
       case '4':
+        try {
+          await api.withStatus('Reclaiming escrow as payer', () => api.refundEscrow(blindRouteContract));
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          console.log(`  ✗ Refund failed: ${msg}\n`);
+        }
+        break;
+      case '5':
+        await api.displayEscrowState(providers, blindRouteContract);
+        break;
+      case '6':
         return;
       default:
         console.log(`  Invalid choice: ${choice}`);

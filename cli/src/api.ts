@@ -73,6 +73,8 @@ export interface EscrowLedgerState {
   amount: bigint;
   deliveryCommitment: string;
   courier: string;
+  clock: bigint;
+  refundDeadline: bigint;
 }
 
 /** Generates a fresh set of BlindRoute private-state secrets (courier key + delivery-proof secret). */
@@ -115,6 +117,8 @@ export const getEscrowLedgerState = async (
       amount: escrow.amount,
       deliveryCommitment: toHex(Buffer.from(escrow.deliveryCommitment)),
       courier: toHex(Buffer.from(escrow.courier)),
+      clock: escrow.clock,
+      refundDeadline: escrow.refundDeadline,
     };
   });
   logger.info(`Ledger state: ${state ? JSON.stringify({ ...state, amount: state.amount.toString() }) : 'null'}`);
@@ -156,9 +160,10 @@ export const lockEscrow = async (
   blindRouteContract: DeployedBlindRouteContract,
   paymentAmount: bigint,
   commitment: Uint8Array,
+  refundTicks: bigint,
 ): Promise<FinalizedTxData> => {
   logger.info('Locking escrow...');
-  const finalizedTxData = await blindRouteContract.callTx.lockEscrow(paymentAmount, commitment);
+  const finalizedTxData = await blindRouteContract.callTx.lockEscrow(paymentAmount, commitment, refundTicks);
   logger.info(`Transaction ${finalizedTxData.public.txId} added in block ${finalizedTxData.public.blockHeight}`);
   return finalizedTxData.public;
 };
@@ -166,6 +171,21 @@ export const lockEscrow = async (
 export const releaseEscrow = async (blindRouteContract: DeployedBlindRouteContract): Promise<FinalizedTxData> => {
   logger.info('Releasing escrow...');
   const finalizedTxData = await blindRouteContract.callTx.releaseEscrow();
+  logger.info(`Transaction ${finalizedTxData.public.txId} added in block ${finalizedTxData.public.blockHeight}`);
+  return finalizedTxData.public;
+};
+
+export const refundEscrow = async (blindRouteContract: DeployedBlindRouteContract): Promise<FinalizedTxData> => {
+  logger.info('Reclaiming escrow as payer...');
+  const finalizedTxData = await blindRouteContract.callTx.refundEscrow();
+  logger.info(`Transaction ${finalizedTxData.public.txId} added in block ${finalizedTxData.public.blockHeight}`);
+  return finalizedTxData.public;
+};
+
+/** Advances the contract's shared tick counter by one — the public, auditable trigger that eventually unlocks refundEscrow. */
+export const tick = async (blindRouteContract: DeployedBlindRouteContract): Promise<FinalizedTxData> => {
+  logger.info('Advancing clock...');
+  const finalizedTxData = await blindRouteContract.callTx.tick();
   logger.info(`Transaction ${finalizedTxData.public.txId} added in block ${finalizedTxData.public.blockHeight}`);
   return finalizedTxData.public;
 };
