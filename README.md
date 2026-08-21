@@ -23,20 +23,21 @@ In traditional e-commerce and Web3 logistics, tracking a delivery to unlock escr
 
 BlindRoute resolves this by separating verification from visibility:
 
-- A **customer** locks a payment escrow on-chain, publishing only the amount and a public *commitment* (a hash) of a private delivery-proof secret.
+- A **customer** locks a payment escrow on-chain, publishing only the amount, a public *commitment* (a hash) of a private delivery-proof secret, and a refund deadline.
 - A **courier** releases the escrow by proving, in zero knowledge, that they know the secret behind that commitment — without the secret (or whatever real-world proof it stands in for: a GPS ping, a recipient signature, a drop-off code) ever touching the ledger.
+- If the courier never releases it, the **customer** isn't stuck forever: once the contract's shared tick counter has advanced past the deadline set at lock time, they can reclaim the funds themselves.
 
-The frontend in `web/` connects to the Lace wallet via the Midnight DApp Connector API, deploys or joins the contract on Preview, and calls both circuits directly from the browser — proofs are generated locally, and only the resulting transaction is submitted on-chain.
+The frontend in `web/` connects to the Lace wallet via the Midnight DApp Connector API, deploys or joins the contract on Preview, and calls all four circuits directly from the browser — proofs are generated locally, and only the resulting transaction is submitted on-chain.
 
 ## Privacy Model
 
 | | Public ledger state | Private witness |
 |---|---|---|
-| What | `state` (EMPTY/LOCKED/RELEASED), `amount`, `deliveryCommitment` (a hash), `courier` (a derived public key), `sequence` | `localSecretKey` (courier's identity secret), `deliveryProof` (the secret behind the commitment) |
+| What | `state` (EMPTY/LOCKED/RELEASED), `amount`, `deliveryCommitment` (a hash), `courier` (a derived public key), `payer` (a derived public key), `clock`, `refundDeadline`, `sequence` | `localSecretKey` (calling party's identity secret — payer or courier, depending which circuit is called), `deliveryProof` (the secret behind the commitment) |
 | Who sees it | Anyone reading the chain, or the app UI | Only this browser tab, in memory, for the current session |
-| Why | The escrow's existence, amount, and current status need to be publicly verifiable so either party (or the network) can confirm the contract behaved correctly | The actual proof of delivery — and the courier's real-world identity — is exactly the data this contract exists to keep off the ledger |
+| Why | The escrow's existence, amount, current status, and refund eligibility need to be publicly verifiable so either party (or the network) can confirm the contract behaved correctly | The actual proof of delivery — and either party's real-world identity — is exactly the data this contract exists to keep off the ledger |
 
-- **PUBLIC:** escrow state, payment amount, the delivery commitment hash, the courier's derived public key, all transaction IDs.
+- **PUBLIC:** escrow state, payment amount, the delivery commitment hash, the courier's and payer's derived public keys, the shared tick clock and refund deadline, all transaction IDs.
 - **PRIVATE:** the delivery-proof secret and the courier's identity secret key — generated in the browser, held only in an in-memory private-state provider, never sent to any server or wallet call, never rendered in the UI.
 - **PROVEN WITHOUT REVEALING:** that the caller in `releaseEscrow()` knows a value that hashes to the commitment recorded when the escrow was locked — the value itself is never disclosed.
 
@@ -76,8 +77,9 @@ Open the printed local URL, then:
 
 1. Click **Connect Lace wallet** and authorize the connection. (Lace must be set to the Preview network.)
 2. Click **Deploy new contract** (or paste an existing Preview address into **Join contract**).
-3. Enter a payment amount and click **Lock escrow (customer)** — approve the Lace prove/sign/submit prompts.
+3. Enter a payment amount and a refund deadline (in ticks), then click **Lock escrow (customer)** — approve the Lace prove/sign/submit prompts.
 4. Click **Release escrow (courier)** — this is the zero-knowledge step: watch the log and the ledger-state panel update to `RELEASED` without the delivery secret ever appearing anywhere on screen.
+5. Alternatively, if the courier never releases it: click **Advance clock** enough times to pass the refund deadline set in step 3, then click **Reclaim funds (payer)** to get the funds back — this only succeeds for the same session/secret key that locked the escrow.
 
 **Known snags and fixes:**
 - Wallet-detection error on deploy → disable any other Midnight-wallet browser extension so only Lace is active.
@@ -116,7 +118,7 @@ cd ../web
 npm test
 ```
 
-**Contract** — 8 vitest cases cover circuit logic (lock/release amounts and commitments), ledger state transitions (EMPTY → LOCKED → RELEASED, including the guard-rail failures for double-locking and double-releasing), and privacy (private state is unchanged and unexposed by any public circuit call).
+**Contract** — 14 vitest cases cover circuit logic (lock/release/refund amounts and commitments), ledger state transitions (EMPTY → LOCKED → RELEASED, including the guard-rail failures for double-locking and double-releasing), the refund/timeout path (deadline-not-yet-passed rejection, successful refund once the shared clock passes the deadline, rejecting a refund attempt from anyone but the original payer, and re-locking after a refund), and privacy (private state is unchanged and unexposed by any public circuit call).
 
 **Application** — 11 vitest cases cover `web/src`'s pure logic: `isUserRejection()` (distinguishing a Lace prompt dismissal from other wallet/API errors) and `describeError()` (fixed messaging for rejections, `Error.message` extraction, Effect.js `FiberFailure`/`Cause` unwrapping, and the JSON-stringify fallback for unrecognized error shapes).
 
@@ -145,7 +147,7 @@ contract/            Compact contract, TypeScript witnesses, unit tests
   src/managed/        Generated by `compact compile` — circuits + keys
 cli/                  Node.js CLI: deploy and drive the contract on Preview/Preprod
 web/                  Browser app: Lace wallet connect/disconnect, deploy/join,
-                       and lockEscrow/releaseEscrow circuit calls
+                       and lockEscrow/releaseEscrow/refundEscrow/tick circuit calls
   src/wallet.ts        Lace connection, network-mismatch/rejection handling
   src/contract.ts      Providers wiring, deploy/join, circuit calls
   src/main.ts          DOM wiring
@@ -160,6 +162,13 @@ https://drive.google.com/file/d/1qZjDiemDrKgfOalnyi8PhC3bJP3szs42/view?usp=shari
 
 https://x.com/JRABARA1
 
+## Level 5 — User Validation
+
+- Target: 50 Preview users (see the note under [Contract Address](#contract-address) — Preview was confirmed with challenge organizers as an acceptable substitute for Preprod)
+- Current: 0 / 50 (see [USERS.md](./USERS.md) for the running list of wallet addresses)
+- Feedback loop: see [docs/FEEDBACK.md](./docs/FEEDBACK.md) for the collection method, raw feedback log, themes, and resulting changes
+- Outreach materials: see [docs/OUTREACH.md](./docs/OUTREACH.md)
+
 ## Status
 
-Level 3: contract wired to a real frontend, Lace connected on Preview, `lockEscrow`/`releaseEscrow` called directly from the browser with proofs generated locally, contract + application test suites both passing in CI on every push, and a submitted product proposal (see [PROPOSAL.md](./PROPOSAL.md)). Multi-party lock/release flows (separate customer and courier wallets/sessions) and a real delivery-proof source (e.g. signed GPS attestations) remain planned for later milestones.
+Level 5 in progress: contract extended with a refund/timeout path (`clock`, `refundEscrow`) on top of the Level 3 base — `lockEscrow`/`releaseEscrow`/`refundEscrow`/`tick` all wired end to end through the browser app (and the CLI) with proofs generated locally, contract + application test suites both passing in CI on every push (14 contract cases, 11 application cases), and a submitted product proposal (see [PROPOSAL.md](./PROPOSAL.md)). Multi-party lock/release flows (separate customer and courier wallets/sessions, a keyed multi-escrow registry) and a real delivery-proof source (e.g. signed GPS attestations) remain planned for later milestones.

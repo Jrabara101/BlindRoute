@@ -1,7 +1,9 @@
 # How to Use BlindRoute
 
 BlindRoute is a privacy-preserving escrow: a customer locks a payment, and a courier
-unlocks it by proving — without revealing — that they know the secret behind it.
+unlocks it by proving — without revealing — that they know the secret behind it. If
+the courier never claims it, the customer can reclaim the funds themselves once an
+on-chain refund deadline has passed.
 
 ## What You Need
 
@@ -21,18 +23,20 @@ You do **not** need to install anything else, run a node, or write any code to u
    - **Deploy new contract** — creates a brand-new, empty escrow. You'll get a contract address back; save it if you want to share this escrow with someone else.
    - **Join contract** — paste in an existing escrow's contract address (for example, one someone else deployed) to connect to it instead.
 
-3. **Lock the escrow (as the customer).** Enter the payment amount you want to lock and click **Lock escrow (customer)**. Lace will prompt you to prove, sign, and submit the transaction — approve each prompt. Once it's confirmed, the escrow's status changes to `LOCKED` and the amount plus a commitment (a hash, not the secret itself) become visible on-chain.
+3. **Lock the escrow (as the customer).** Enter the payment amount you want to lock and a refund deadline in "ticks" (see step 6), then click **Lock escrow (customer)**. Lace will prompt you to prove, sign, and submit the transaction — approve each prompt. Once it's confirmed, the escrow's status changes to `LOCKED` and the amount plus a commitment (a hash, not the secret itself) become visible on-chain.
 
 4. **Release the escrow (as the courier).** When the delivery condition is met, click **Release escrow (courier)**. This is the zero-knowledge step: the app proves, entirely in your browser, that it knows the secret behind the commitment from step 3 — without ever sending that secret anywhere. Approve Lace's prompts again. This step is slower than locking (the proof is bigger), so expect it to take longer.
 
 5. **Watch the status update.** The on-screen ledger-state panel and the activity log update as each transaction confirms — `EMPTY` → `LOCKED` → `RELEASED`. At no point does the delivery secret appear in the log, the UI, or anywhere else.
 
+6. **Or, reclaim your funds if the courier never shows up.** The contract has a shared "clock" — a counter anyone can advance with the **Advance clock** button. When you locked the escrow, you set a refund deadline in "ticks": once the clock has been advanced past that number, the **Reclaim funds (payer)** button becomes usable, and only the browser session that originally locked the escrow can successfully use it (it's checked the same way the courier's identity is — a proof, not a password). This closes the gap where funds would otherwise sit locked forever if the courier never releases them.
+
 ## What Gets Proved (and What Stays Private)
 
 | | Public (anyone can see on-chain) | Private (never leaves your browser) |
 |---|---|---|
-| What | Escrow status, payment amount, the commitment hash, the courier's derived public key, transaction IDs | The delivery-proof secret, the courier's identity secret key |
-| Why | So anyone can independently verify the escrow was locked and later released correctly | This is exactly the data BlindRoute exists to keep off the public ledger |
+| What | Escrow status, payment amount, the commitment hash, the courier's and payer's derived public keys, the shared clock and refund deadline, transaction IDs | The delivery-proof secret, the calling party's identity secret key |
+| Why | So anyone can independently verify the escrow was locked and later released (or refunded) correctly | This is exactly the data BlindRoute exists to keep off the public ledger |
 
 When the courier releases the escrow, the network confirms — via a zero-knowledge proof — that they genuinely knew the secret behind the original commitment. It does **not** learn what that secret was, or who the courier is in real life. All it sees is: a valid proof, and a public key that was used to submit it.
 
@@ -44,3 +48,5 @@ When the courier releases the escrow, the network confirms — via a zero-knowle
 - **"Insufficient funds: dust" error** — Your wallet has NIGHT but hasn't registered it for DUST generation yet, which is needed to pay for transactions. Use Lace's dust-designation action, wait a bit for it to accumulate, then retry.
 - **Release feels stuck / much slower than Lock** — This is expected. The release proof is significantly larger than the lock proof, so local proof generation takes noticeably longer. Give it time before assuming it's frozen.
 - **App says Lace is on the wrong network** — Open Lace's settings and switch the active network to **Preview**, then reconnect from the app.
+- **"Refund deadline has not passed yet"** — Click **Advance clock** enough times to pass the deadline you set when locking, then try **Reclaim funds (payer)** again.
+- **"Only the original payer can reclaim this escrow"** — Reclaim only works from the same browser session (same secret key) that originally locked the escrow.
