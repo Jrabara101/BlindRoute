@@ -8,6 +8,13 @@
 // code) — never touches the ledger. Only the commitment hash, the
 // escrow amount, the state machine, and the courier's derived public
 // key are ever public.
+//
+// If the courier never releases the escrow, the payer is not stuck
+// forever: lockEscrow records a refund deadline (in contract-local
+// clock ticks), and once the shared clock has advanced past it, the
+// original payer can reclaim the funds via refundEscrow — proven to be
+// the original payer the same way a courier proves their identity, by
+// deriving a public key from a private secret key.
 
 pragma language_version >= 0.20;
 
@@ -26,10 +33,33 @@ export ledger deliveryCommitment: Bytes<32>;
 export ledger courier: Bytes<32>;
 export ledger sequence: Counter;
 
+// clock is a self-contained, contract-local tick counter (advanced only by
+// the tick() circuit below) used to bound how long a locked escrow can sit
+// unclaimed before the payer can reclaim it via refundEscrow. It is not a
+// wall-clock or block-height reading — every escrow's deadline is expressed
+// in "how many tick() calls from lock time", making the timeout mechanism
+// fully self-contained and independently testable without relying on any
+// external ledger-time primitive.
+export ledger clock: Counter;
+// refundDeadline is the clock value at or after which the current LOCKED
+// escrow becomes refundable by its original payer.
+export ledger refundDeadline: Uint<64>;
+// payer is the derived public key of whoever locked the current escrow —
+// recorded so only they (not an arbitrary caller) can reclaim it via refund.
+export ledger payer: Bytes<32>;
+
 constructor() {
   state = EscrowState.EMPTY;
   amount = 0;
   sequence.increment(1);
+}
+
+// Advances the shared tick counter by one. Callable by anyone (customer,
+// courier, or an uninvolved third party) — it carries no funds and reveals
+// nothing beyond "some party wanted the clock to move forward," which is
+// exactly the timeout mechanism's public, auditable trigger.
+export circuit tick(): [] {
+  clock.increment(1);
 }
 
 // ── Private witnesses (never leave the caller's device) ────────────────────
@@ -43,11 +73,15 @@ witness deliveryProof(): Bytes<32>;
 
 // Customer locks payment for a delivery, publishing only the escrow
 // amount and a commitment to the (private) delivery proof the courier
-// will later need to reveal knowledge of.
-export circuit lockEscrow(paymentAmount: Uint<64>, commitment: Bytes<32>): [] {
+// will later need to reveal knowledge of. refundTicks sets how many
+// tick() calls must occur before the payer can reclaim the funds via
+// refundEscrow if the courier never releases it.
+export circuit lockEscrow(paymentAmount: Uint<64>, commitment: Bytes<32>, refundTicks: Uint<64>): [] {
   assert(state == EscrowState.EMPTY, "Escrow already locked or released");
   amount = disclose(paymentAmount);
   deliveryCommitment = disclose(commitment);
+  payer = disclose(publicKey(localSecretKey(), sequence as Field as Bytes<32>));
+  refundDeadline = disclose(((clock as Uint<64>) + refundTicks) as Uint<64>);
   state = EscrowState.LOCKED;
 }
 
@@ -65,6 +99,23 @@ export circuit releaseEscrow(): [] {
   sequence.increment(1);
 }
 
+// Lets the original payer reclaim a LOCKED escrow's funds once the clock
+// has advanced past the deadline set at lock time, closing the gap where
+// funds would otherwise sit locked forever if the courier never claims
+// them. Only the original payer can call this successfully — proven the
+// same way releaseEscrow proves courier identity, by deriving a public key
+// from a private secret key and checking it against the value recorded
+// on-chain at lock time.
+export circuit refundEscrow(): [] {
+  assert(state == EscrowState.LOCKED, "No active escrow to refund");
+  assert(clock as Uint<64> >= refundDeadline, "Refund deadline has not passed yet");
+  const callerKey = publicKey(localSecretKey(), sequence as Field as Bytes<32>);
+  assert(callerKey == payer, "Only the original payer can reclaim this escrow");
+  state = EscrowState.EMPTY;
+  amount = 0;
+  sequence.increment(1);
+}
+
 // Hashes a delivery-proof secret into the public commitment stored on the
 // ledger. Callable off-chain (by customer or courier) so both sides can
 // agree on a commitment without ever transmitting the underlying secret.
@@ -72,9 +123,10 @@ export circuit commitmentOf(proof: Bytes<32>): Bytes<32> {
   return persistentHash<Vector<2, Bytes<32>>>([pad(32, "blindroute:commitment:"), proof]);
 }
 
-// Derives a courier's public key from their private secret key and the
-// current escrow sequence, so the same courier can be recognized across
-// escrows without ever revealing the secret key itself.
+// Derives a party's (payer's or courier's) public key from their private
+// secret key and the current escrow sequence, so the same party can be
+// recognized across escrows — and, for the payer, verified as the one
+// entitled to a refund — without ever revealing the secret key itself.
 export circuit publicKey(sk: Bytes<32>, seq: Bytes<32>): Bytes<32> {
-  return persistentHash<Vector<3, Bytes<32>>>([pad(32, "blindroute:courier:"), seq, sk]);
+  return persistentHash<Vector<3, Bytes<32>>>([pad(32, "blindroute:party:"), seq, sk]);
 }

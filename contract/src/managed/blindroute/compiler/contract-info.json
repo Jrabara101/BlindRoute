@@ -4,6 +4,18 @@
   "runtime-version": "0.16.0",
   "circuits": [
     {
+      "name": "tick",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
       "name": "lockEscrow",
       "pure": false,
       "proof": true,
@@ -21,6 +33,13 @@
             "type-name": "Bytes",
             "length": 32
           }
+        },
+        {
+          "name": "refundTicks",
+          "type": {
+            "type-name": "Uint",
+            "maxval": 18446744073709551615
+          }
         }
       ],
       "result-type": {
@@ -31,6 +50,18 @@
     },
     {
       "name": "releaseEscrow",
+      "pure": false,
+      "proof": true,
+      "arguments": [
+      ],
+      "result-type": {
+        "type-name": "Tuple",
+        "types": [
+        ]
+      }
+    },
+    {
+      "name": "refundEscrow",
       "pure": false,
       "proof": true,
       "arguments": [
@@ -158,6 +189,32 @@
       "index": 4,
       "exported": true,
       "storage": "Counter"
+    },
+    {
+      "name": "clock",
+      "index": 5,
+      "exported": true,
+      "storage": "Counter"
+    },
+    {
+      "name": "refundDeadline",
+      "index": 6,
+      "exported": true,
+      "storage": "Cell",
+      "type": {
+        "type-name": "Uint",
+        "maxval": 18446744073709551615
+      }
+    },
+    {
+      "name": "payer",
+      "index": 7,
+      "exported": true,
+      "storage": "Cell",
+      "type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
     }
   ]
 }

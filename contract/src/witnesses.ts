@@ -1,8 +1,10 @@
 /*
  * Defines the shape of BlindRoute's private state and the two witness
- * functions the contract calls into: localSecretKey (courier identity)
- * and deliveryProof (the secret behind the public delivery commitment).
- * Neither value ever leaves this local state or gets written to the ledger.
+ * functions the contract calls into: localSecretKey (identifies whichever
+ * party is calling — payer at lockEscrow/refundEscrow, courier at
+ * releaseEscrow) and deliveryProof (the secret behind the public delivery
+ * commitment). Neither value ever leaves this local state or gets written
+ * to the ledger.
  */
 
 import { type Ledger } from "./managed/blindroute/contract/index.js";

@@ -51,7 +51,7 @@ describe("BlindRoute escrow contract", () => {
 
     // releaseEscrow derives the courier key from the sequence *before*
     // incrementing it, so the expected key must be captured beforehand.
-    const expectedCourierKey = simulator.courierPublicKey();
+    const expectedCourierKey = simulator.partyPublicKey();
     const ledgerState = simulator.releaseEscrow();
     expect(ledgerState.state).toEqual(EscrowState.RELEASED);
     expect(ledgerState.courier).toEqual(expectedCourierKey);
@@ -89,5 +89,72 @@ describe("BlindRoute escrow contract", () => {
     simulator.lockEscrow(1_000n, commitment);
     simulator.releaseEscrow();
     expect(simulator.getPrivateState()).toEqual(initialPrivateState);
+  });
+
+  it("refuses to refund a locked escrow before its deadline has passed", () => {
+    const simulator = new BlindRouteSimulator(randomBytes(32), randomBytes(32));
+    const commitment = simulator.commitmentOf(simulator.getPrivateState().deliveryProofSecret);
+    simulator.lockEscrow(1_000n, commitment, 3n);
+    simulator.tick();
+    simulator.tick();
+    expect(() => simulator.refundEscrow()).toThrow(
+      "failed assert: Refund deadline has not passed yet",
+    );
+  });
+
+  it("lets the original payer reclaim funds once the refund deadline passes", () => {
+    const simulator = new BlindRouteSimulator(randomBytes(32), randomBytes(32));
+    const commitment = simulator.commitmentOf(simulator.getPrivateState().deliveryProofSecret);
+    simulator.lockEscrow(1_000n, commitment, 2n);
+    simulator.tick();
+    simulator.tick();
+
+    const ledgerState = simulator.refundEscrow();
+    expect(ledgerState.state).toEqual(EscrowState.EMPTY);
+    expect(ledgerState.amount).toEqual(0n);
+  });
+
+  it("refuses to refund an escrow that isn't locked", () => {
+    const simulator = new BlindRouteSimulator(randomBytes(32), randomBytes(32));
+    expect(() => simulator.refundEscrow()).toThrow(
+      "failed assert: No active escrow to refund",
+    );
+  });
+
+  it("refuses to let a party other than the original payer claim the refund", () => {
+    const simulator = new BlindRouteSimulator(randomBytes(32), randomBytes(32));
+    const commitment = simulator.commitmentOf(simulator.getPrivateState().deliveryProofSecret);
+    simulator.lockEscrow(1_000n, commitment, 1n);
+    simulator.tick();
+
+    // a different party (e.g. the courier, or an unrelated caller) tries to claim the refund
+    simulator.switchCourier(randomBytes(32));
+    expect(() => simulator.refundEscrow()).toThrow(
+      "failed assert: Only the original payer can reclaim this escrow",
+    );
+  });
+
+  it("allows a new escrow to be locked after a refund", () => {
+    const simulator = new BlindRouteSimulator(randomBytes(32), randomBytes(32));
+    const commitment = simulator.commitmentOf(simulator.getPrivateState().deliveryProofSecret);
+    simulator.lockEscrow(1_000n, commitment, 1n);
+    simulator.tick();
+    simulator.refundEscrow();
+
+    const newCommitment = simulator.commitmentOf(simulator.getPrivateState().deliveryProofSecret);
+    const ledgerState = simulator.lockEscrow(2_000n, newCommitment);
+    expect(ledgerState.state).toEqual(EscrowState.LOCKED);
+    expect(ledgerState.amount).toEqual(2_000n);
+  });
+
+  it("cannot release an escrow after it has been refunded", () => {
+    const simulator = new BlindRouteSimulator(randomBytes(32), randomBytes(32));
+    const commitment = simulator.commitmentOf(simulator.getPrivateState().deliveryProofSecret);
+    simulator.lockEscrow(1_000n, commitment, 1n);
+    simulator.tick();
+    simulator.refundEscrow();
+    expect(() => simulator.releaseEscrow()).toThrow(
+      "failed assert: No active escrow to release",
+    );
   });
 });

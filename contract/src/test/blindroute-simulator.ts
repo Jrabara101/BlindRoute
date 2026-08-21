@@ -70,11 +70,12 @@ export class BlindRouteSimulator {
     return this.contract.circuits.commitmentOf(this.circuitContext, proof).result;
   }
 
-  public lockEscrow(paymentAmount: bigint, commitment: Uint8Array): Ledger {
+  public lockEscrow(paymentAmount: bigint, commitment: Uint8Array, refundTicks: bigint = 0n): Ledger {
     this.circuitContext = this.contract.impureCircuits.lockEscrow(
       this.circuitContext,
       paymentAmount,
       commitment,
+      refundTicks,
     ).context;
     return ledger(this.circuitContext.currentQueryContext.state);
   }
@@ -86,7 +87,23 @@ export class BlindRouteSimulator {
     return ledger(this.circuitContext.currentQueryContext.state);
   }
 
-  public courierPublicKey(): Uint8Array {
+  public refundEscrow(): Ledger {
+    this.circuitContext = this.contract.impureCircuits.refundEscrow(
+      this.circuitContext,
+    ).context;
+    return ledger(this.circuitContext.currentQueryContext.state);
+  }
+
+  /** Advances the shared tick counter by one; call repeatedly to reach a deadline. */
+  public tick(): Ledger {
+    this.circuitContext = this.contract.impureCircuits.tick(
+      this.circuitContext,
+    ).context;
+    return ledger(this.circuitContext.currentQueryContext.state);
+  }
+
+  /** Derives the calling party's public key from their current secret key and the escrow sequence — used for both payer (lock/refund) and courier (release) roles. */
+  public partyPublicKey(): Uint8Array {
     const sequence = convertFieldToBytes(
       32,
       this.getLedger().sequence,

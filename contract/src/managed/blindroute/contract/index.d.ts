@@ -8,17 +8,23 @@ export type Witnesses<PS> = {
 }
 
 export type ImpureCircuits<PS> = {
+  tick(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, []>;
   lockEscrow(context: __compactRuntime.CircuitContext<PS>,
              paymentAmount_0: bigint,
-             commitment_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
+             commitment_0: Uint8Array,
+             refundTicks_0: bigint): __compactRuntime.CircuitResults<PS, []>;
   releaseEscrow(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, []>;
+  refundEscrow(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, []>;
 }
 
 export type ProvableCircuits<PS> = {
+  tick(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, []>;
   lockEscrow(context: __compactRuntime.CircuitContext<PS>,
              paymentAmount_0: bigint,
-             commitment_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
+             commitment_0: Uint8Array,
+             refundTicks_0: bigint): __compactRuntime.CircuitResults<PS, []>;
   releaseEscrow(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, []>;
+  refundEscrow(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, []>;
 }
 
 export type PureCircuits = {
@@ -27,10 +33,13 @@ export type PureCircuits = {
 }
 
 export type Circuits<PS> = {
+  tick(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, []>;
   lockEscrow(context: __compactRuntime.CircuitContext<PS>,
              paymentAmount_0: bigint,
-             commitment_0: Uint8Array): __compactRuntime.CircuitResults<PS, []>;
+             commitment_0: Uint8Array,
+             refundTicks_0: bigint): __compactRuntime.CircuitResults<PS, []>;
   releaseEscrow(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, []>;
+  refundEscrow(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, []>;
   commitmentOf(context: __compactRuntime.CircuitContext<PS>, proof_0: Uint8Array): __compactRuntime.CircuitResults<PS, Uint8Array>;
   publicKey(context: __compactRuntime.CircuitContext<PS>,
             sk_0: Uint8Array,
@@ -43,6 +52,9 @@ export type Ledger = {
   readonly deliveryCommitment: Uint8Array;
   readonly courier: Uint8Array;
   readonly sequence: bigint;
+  readonly clock: bigint;
+  readonly refundDeadline: bigint;
+  readonly payer: Uint8Array;
 }
 
 export type ContractReferenceLocations = any;
