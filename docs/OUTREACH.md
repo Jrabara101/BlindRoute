@@ -15,8 +15,9 @@ Contract Address note for why Preview rather than Preprod).
 > https://blindroute-web.surge.sh/ — connect your wallet, deploy or join a
 > contract, and try locking + releasing an escrow.
 >
-> Once you've tried it, drop your wallet address + one line of feedback here
-> (or DM me) — I'm collecting both for a builder challenge. Thanks for testing!
+> Once you've tried it, fill out this 2-min form with your wallet address +
+> feedback: https://forms.gle/6oSenWAdL55RkkPa8 (or drop it here / DM me) —
+> I'm collecting both for a builder challenge. Thanks for testing!
 
 (89 words)
 
@@ -41,9 +42,10 @@ Contract Address note for why Preview rather than Preprod).
 > https://blindroute-web.surge.sh/ — connect, deploy/join a contract, lock an
 > escrow, release it.
 >
-> If you can, send me your wallet address afterward plus anything that
-> confused you or broke — even "the button label was unclear" is genuinely
-> useful. Happy to return the favor if you're testing something too. Thanks!
+> If you can, fill out this 2-min form afterward with your wallet address
+> plus anything that confused you or broke — even "the button label was
+> unclear" is genuinely useful: https://forms.gle/6oSenWAdL55RkkPa8
+> Happy to return the favor if you're testing something too. Thanks!
 
 ## Tracking outreach
 

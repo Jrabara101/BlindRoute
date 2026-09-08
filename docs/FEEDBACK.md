@@ -2,11 +2,17 @@
 
 ## Feedback Collection Method
 
-<!-- Describe how feedback is being collected once acquisition starts, e.g.:
-     "A short form linked from the demo page and from every outreach message
-     (Discord/Telegram/X), plus direct DMs from testers who prefer that." -->
+A Google Form linked from every outreach message (Discord/Telegram/X, see
+[OUTREACH.md](./OUTREACH.md)) and from a **Feedback** button in the app's top
+bar — plus direct DMs from testers who prefer that. See
+[FEEDBACK_FORM.md](./FEEDBACK_FORM.md) for the exact field spec used to build
+it.
 
-TBD — will be filled in once outreach begins (see Step 4 materials).
+The form also opens automatically, once per session, the first time a tester
+successfully releases an escrow — the natural "I just finished the golden
+path" moment (see `web/src/main.ts`'s `maybeAutoOpenFeedback`).
+
+**Live form link:** https://forms.gle/6oSenWAdL55RkkPa8
 
 ## Raw Feedback Log
 

@@ -46,6 +46,46 @@ const refundButton = document.getElementById('refund') as HTMLButtonElement;
 const tickButton = document.getElementById('tick') as HTMLButtonElement;
 const proceedToReleaseButton = document.getElementById('proceed-to-release') as HTMLButtonElement;
 
+// ── Feedback modal ───────────────────────────────────────────────────────────
+const feedbackModal = document.getElementById('feedback-modal') as HTMLDivElement;
+const feedbackOpenButton = document.getElementById('feedback-open') as HTMLButtonElement;
+const feedbackCloseButton = document.getElementById('feedback-close') as HTMLButtonElement;
+const feedbackDismissButton = document.getElementById('feedback-dismiss') as HTMLButtonElement;
+const feedbackBackdrop = document.getElementById('feedback-backdrop') as HTMLDivElement;
+const feedbackIframe = document.getElementById('feedback-iframe') as HTMLIFrameElement;
+
+let feedbackIframeLoaded = false;
+const openFeedbackModal = (): void => {
+  // Lazy-load the iframe src so the form only fetches once actually opened.
+  // (iframe.src always reads back as an absolute URL — even the host page's
+  // own URL when the attribute is empty — so track loaded state separately.)
+  if (!feedbackIframeLoaded) {
+    feedbackIframeLoaded = true;
+    feedbackIframe.src = feedbackIframe.dataset.src ?? '';
+  }
+  feedbackModal.classList.remove('hidden');
+  feedbackModal.classList.add('flex');
+};
+
+const closeFeedbackModal = (): void => {
+  feedbackModal.classList.add('hidden');
+  feedbackModal.classList.remove('flex');
+};
+
+feedbackOpenButton.addEventListener('click', openFeedbackModal);
+feedbackCloseButton.addEventListener('click', closeFeedbackModal);
+feedbackDismissButton.addEventListener('click', closeFeedbackModal);
+feedbackBackdrop.addEventListener('click', closeFeedbackModal);
+
+// Auto-open once per session the first time an escrow is released — the
+// natural "you just finished the golden path" moment to ask for feedback.
+let hasAutoOpenedFeedback = false;
+const maybeAutoOpenFeedback = (): void => {
+  if (hasAutoOpenedFeedback) return;
+  hasAutoOpenedFeedback = true;
+  openFeedbackModal();
+};
+
 // ── Stage / step-tracker rendering ──────────────────────────────────────────
 type Stage = 'disconnected' | 'connected' | 'empty' | 'locking' | 'locked' | 'releasing' | 'released' | 'error';
 
@@ -201,7 +241,10 @@ const refreshLedgerState = async (): Promise<void> => {
 
   if (escrow.state === 'EMPTY') showStage('empty');
   else if (escrow.state === 'LOCKED') showStage('locked');
-  else if (escrow.state === 'RELEASED') showStage('released');
+  else if (escrow.state === 'RELEASED') {
+    showStage('released');
+    maybeAutoOpenFeedback();
+  }
 };
 
 // ── Wallet connect / disconnect ──────────────────────────────────────────────
