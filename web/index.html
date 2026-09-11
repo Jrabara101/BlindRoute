@@ -101,6 +101,10 @@
           <span class="font-label-caps text-label-caps text-on-surface-variant" id="wallet-status-pill">Not Connected</span>
         </div>
         <span class="font-label-caps text-label-caps text-on-surface-variant hidden md:inline">Preview Network</span>
+        <button id="onboarding-open" class="flex items-center gap-2 border border-outline-variant/40 text-on-surface-variant hover:text-on-surface hover:border-outline-variant px-3 py-1.5 rounded-lg font-label-caps text-label-caps transition-colors">
+          <span class="material-symbols-outlined text-[16px]">help</span>
+          <span class="hidden sm:inline">Guide</span>
+        </button>
         <button id="feedback-open" class="flex items-center gap-2 border border-outline-variant/40 text-on-surface-variant hover:text-on-surface hover:border-outline-variant px-3 py-1.5 rounded-lg font-label-caps text-label-caps transition-colors">
           <span class="material-symbols-outlined text-[16px]">chat</span>
           <span class="hidden sm:inline">Feedback</span>
@@ -108,6 +112,88 @@
         <span class="material-symbols-outlined text-on-surface-variant text-[20px]" data-weight="fill">account_balance_wallet</span>
       </div>
     </header>
+
+    <!-- Onboarding Modal (first-visit guide) -->
+    <div id="onboarding-modal" class="hidden fixed inset-0 z-[110] items-center justify-center p-4">
+      <div id="onboarding-backdrop" class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+      <div class="relative bg-surface-elevated rounded-2xl stage-shadow w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border border-surface-container">
+        <div class="flex items-center justify-between px-6 py-5 border-b border-surface-container">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-primary" data-weight="fill">shield_locked</span>
+            <h2 class="font-headline-md text-headline-md text-on-surface">How BlindRoute Works</h2>
+          </div>
+          <button id="onboarding-close" class="text-on-surface-variant hover:text-on-surface transition-colors">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto">
+          <!-- Slide 1: Connect -->
+          <div class="onboarding-slide" data-slide="0">
+            <img src="/onboarding/01-connect.png" alt="Connect wallet screen" class="w-full border-b border-surface-container" />
+            <div class="p-6">
+              <span class="font-label-caps text-label-caps text-public-zone">STEP 1 OF 5</span>
+              <h3 class="font-headline-md text-headline-md text-on-surface mt-2 mb-2">Connect Your Wallet</h3>
+              <p class="font-body-md text-body-md text-text-muted">Click <strong class="text-on-surface">Connect Wallet</strong> and approve the Lace popup. Make sure Lace is set to the <strong class="text-on-surface">Preview</strong> network with some test funds (tDUST) from the faucet first.</p>
+            </div>
+          </div>
+          <!-- Slide 2: Contract -->
+          <div class="onboarding-slide hidden" data-slide="1">
+            <img src="/onboarding/03-contract.png" alt="Deploy or join contract screen" class="w-full border-b border-surface-container" />
+            <div class="p-6">
+              <span class="font-label-caps text-label-caps text-public-zone">STEP 2 OF 5</span>
+              <h3 class="font-headline-md text-headline-md text-on-surface mt-2 mb-2">Deploy or Join a Contract</h3>
+              <p class="font-body-md text-body-md text-text-muted"><strong class="text-on-surface">Deploy New Contract</strong> starts a fresh escrow (you're the payer). Or <strong class="text-on-surface">Join Existing</strong> by pasting a contract address someone shared with you.</p>
+            </div>
+          </div>
+          <!-- Slide 3: Lock -->
+          <div class="onboarding-slide hidden" data-slide="2">
+            <img src="/onboarding/04-lock.png" alt="Lock escrow screen" class="w-full border-b border-surface-container" />
+            <div class="p-6">
+              <span class="font-label-caps text-label-caps text-private-zone">STEP 3 OF 5</span>
+              <h3 class="font-headline-md text-headline-md text-on-surface mt-2 mb-2">Lock the Escrow</h3>
+              <p class="font-body-md text-body-md text-text-muted">As the payer, set an amount and a refund deadline (in ticks), then <strong class="text-on-surface">Lock Escrow</strong>. A delivery secret is generated locally in your browser — it's never sent anywhere, only a hash (commitment) of it goes on-chain.</p>
+            </div>
+          </div>
+          <!-- Slide 4: Locked -->
+          <div class="onboarding-slide hidden" data-slide="3">
+            <img src="/onboarding/05-locked-success.png" alt="Escrow locked successfully screen" class="w-full border-b border-surface-container" />
+            <div class="p-6">
+              <span class="font-label-caps text-label-caps text-public-zone">STEP 4 OF 5</span>
+              <h3 class="font-headline-md text-headline-md text-on-surface mt-2 mb-2">Escrow Locked</h3>
+              <p class="font-body-md text-body-md text-text-muted">Funds are now cryptographically secured. From here, the courier can <strong class="text-on-surface">Release</strong> it by proving they know the secret, or — once the refund deadline passes — the payer can <strong class="text-on-surface">Reclaim</strong> it themselves.</p>
+            </div>
+          </div>
+          <!-- Slide 5: Release (no screenshot yet — described) -->
+          <div class="onboarding-slide hidden" data-slide="4">
+            <div class="w-full aspect-video bg-surface-container-low border-b border-surface-container flex flex-col items-center justify-center gap-3 text-center px-8">
+              <span class="material-symbols-outlined text-[40px] text-private-zone" data-weight="fill">key</span>
+              <p class="font-crypto-code text-crypto-code text-text-muted">Verified without revealing the secret.</p>
+            </div>
+            <div class="p-6">
+              <span class="font-label-caps text-label-caps text-private-zone">STEP 5 OF 5</span>
+              <h3 class="font-headline-md text-headline-md text-on-surface mt-2 mb-2">Release (Courier) or Reclaim (Payer)</h3>
+              <p class="font-body-md text-body-md text-text-muted"><strong class="text-on-surface">Release</strong> proves — in zero knowledge, right in your browser — that the courier knows the secret. This step is slower than locking; that's expected. Ready to try it? Close this guide and connect your wallet.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="px-6 py-4 border-t border-surface-container flex items-center justify-between gap-4">
+          <div class="flex gap-1.5" id="onboarding-dots">
+            <span class="onboarding-dot w-2 h-2 rounded-full bg-public-zone transition-colors" data-dot="0"></span>
+            <span class="onboarding-dot w-2 h-2 rounded-full bg-surface-container-highest transition-colors" data-dot="1"></span>
+            <span class="onboarding-dot w-2 h-2 rounded-full bg-surface-container-highest transition-colors" data-dot="2"></span>
+            <span class="onboarding-dot w-2 h-2 rounded-full bg-surface-container-highest transition-colors" data-dot="3"></span>
+            <span class="onboarding-dot w-2 h-2 rounded-full bg-surface-container-highest transition-colors" data-dot="4"></span>
+          </div>
+          <div class="flex items-center gap-3">
+            <button id="onboarding-skip" class="font-label-caps text-label-caps text-text-muted hover:text-on-surface transition-colors">Skip</button>
+            <button id="onboarding-prev" class="hidden border border-surface-bright text-on-surface px-5 py-2.5 rounded-lg font-label-caps text-label-caps hover:bg-surface-container-high transition-colors">Back</button>
+            <button id="onboarding-next" class="bg-public-zone text-on-primary px-5 py-2.5 rounded-lg font-label-caps text-label-caps hover:opacity-90 transition-opacity">Next</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Feedback Modal -->
     <div id="feedback-modal" class="hidden fixed inset-0 z-[100] items-center justify-center p-4">

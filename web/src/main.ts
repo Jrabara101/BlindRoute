@@ -46,6 +46,74 @@ const refundButton = document.getElementById('refund') as HTMLButtonElement;
 const tickButton = document.getElementById('tick') as HTMLButtonElement;
 const proceedToReleaseButton = document.getElementById('proceed-to-release') as HTMLButtonElement;
 
+// ── Onboarding modal ─────────────────────────────────────────────────────────
+const ONBOARDING_SLIDE_COUNT = 5;
+const ONBOARDING_SEEN_KEY = 'blindroute:onboarding-seen';
+
+const onboardingModal = document.getElementById('onboarding-modal') as HTMLDivElement;
+const onboardingBackdrop = document.getElementById('onboarding-backdrop') as HTMLDivElement;
+const onboardingOpenButton = document.getElementById('onboarding-open') as HTMLButtonElement;
+const onboardingCloseButton = document.getElementById('onboarding-close') as HTMLButtonElement;
+const onboardingSkipButton = document.getElementById('onboarding-skip') as HTMLButtonElement;
+const onboardingPrevButton = document.getElementById('onboarding-prev') as HTMLButtonElement;
+const onboardingNextButton = document.getElementById('onboarding-next') as HTMLButtonElement;
+
+let onboardingSlide = 0;
+
+const renderOnboardingSlide = (): void => {
+  document.querySelectorAll<HTMLElement>('.onboarding-slide').forEach((el) => {
+    el.classList.toggle('hidden', Number(el.dataset.slide) !== onboardingSlide);
+  });
+  document.querySelectorAll<HTMLElement>('.onboarding-dot').forEach((dot) => {
+    const isActive = Number(dot.dataset.dot) === onboardingSlide;
+    dot.classList.toggle('bg-public-zone', isActive);
+    dot.classList.toggle('bg-surface-container-highest', !isActive);
+  });
+  onboardingPrevButton.classList.toggle('hidden', onboardingSlide === 0);
+  onboardingNextButton.textContent = onboardingSlide === ONBOARDING_SLIDE_COUNT - 1 ? 'Got it' : 'Next';
+};
+
+const openOnboardingModal = (): void => {
+  onboardingSlide = 0;
+  renderOnboardingSlide();
+  onboardingModal.classList.remove('hidden');
+  onboardingModal.classList.add('flex');
+};
+
+const closeOnboardingModal = (): void => {
+  onboardingModal.classList.add('hidden');
+  onboardingModal.classList.remove('flex');
+  try {
+    localStorage.setItem(ONBOARDING_SEEN_KEY, '1');
+  } catch {
+    // Private-browsing / storage-denied — non-fatal, just means it may show again next visit.
+  }
+};
+
+onboardingOpenButton.addEventListener('click', openOnboardingModal);
+onboardingCloseButton.addEventListener('click', closeOnboardingModal);
+onboardingSkipButton.addEventListener('click', closeOnboardingModal);
+onboardingBackdrop.addEventListener('click', closeOnboardingModal);
+onboardingPrevButton.addEventListener('click', () => {
+  onboardingSlide = Math.max(0, onboardingSlide - 1);
+  renderOnboardingSlide();
+});
+onboardingNextButton.addEventListener('click', () => {
+  if (onboardingSlide === ONBOARDING_SLIDE_COUNT - 1) {
+    closeOnboardingModal();
+    return;
+  }
+  onboardingSlide += 1;
+  renderOnboardingSlide();
+});
+
+// Auto-open once per browser (not per session) on first visit.
+try {
+  if (!localStorage.getItem(ONBOARDING_SEEN_KEY)) openOnboardingModal();
+} catch {
+  // Private-browsing / storage-denied — skip auto-open rather than show every load.
+}
+
 // ── Feedback modal ───────────────────────────────────────────────────────────
 const feedbackModal = document.getElementById('feedback-modal') as HTMLDivElement;
 const feedbackOpenButton = document.getElementById('feedback-open') as HTMLButtonElement;
