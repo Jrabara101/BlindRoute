@@ -1,0 +1,292 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>BlindRoute - Escrow Released</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-elevated": "#121820",
+                      "on-secondary": "#440088",
+                      "inverse-primary": "#006c45",
+                      "on-tertiary-fixed": "#3e001f",
+                      "error-container": "#93000a",
+                      "inverse-on-surface": "#2d3137",
+                      "on-secondary-fixed": "#280056",
+                      "tertiary-container": "#ffabc7",
+                      "private-accent": "#FF5FA3",
+                      "secondary": "#d7baff",
+                      "on-primary-container": "#005c3a",
+                      "surface-highest": "#1C232D",
+                      "tertiary": "#ffd4e0",
+                      "secondary-fixed-dim": "#d7baff",
+                      "on-secondary-container": "#cca8ff",
+                      "on-error-container": "#ffdad6",
+                      "secondary-container": "#5f27a7",
+                      "on-tertiary-container": "#9e0558",
+                      "primary-container": "#3ddc97",
+                      "surface-container-high": "#262a31",
+                      "on-background": "#dfe2eb",
+                      "on-surface-variant": "#bbcabe",
+                      "on-tertiary-fixed-variant": "#8d004e",
+                      "private-zone": "#B37FFF",
+                      "surface-bright": "#353940",
+                      "primary": "#61f9b1",
+                      "primary-fixed-dim": "#42e09a",
+                      "outline": "#859489",
+                      "on-error": "#690005",
+                      "text-muted": "#8A919E",
+                      "inverse-surface": "#dfe2eb",
+                      "surface-tint": "#42e09a",
+                      "error": "#ffb4ab",
+                      "secondary-fixed": "#eddcff",
+                      "tertiary-fixed": "#ffd9e3",
+                      "outline-variant": "#3c4a41",
+                      "surface-container-lowest": "#0a0e14",
+                      "on-primary-fixed": "#002112",
+                      "on-secondary-fixed-variant": "#5c24a4",
+                      "error-red": "#FF4D4D",
+                      "background": "#10141a",
+                      "on-tertiary": "#640036",
+                      "surface-container-low": "#181c22",
+                      "surface-container-highest": "#31353c",
+                      "surface-base": "#0A0E14",
+                      "public-zone": "#3DDC97",
+                      "surface-variant": "#31353c",
+                      "on-primary-fixed-variant": "#005233",
+                      "tertiary-fixed-dim": "#ffb0ca",
+                      "on-primary": "#003822",
+                      "primary-fixed": "#65fdb5",
+                      "on-surface": "#dfe2eb",
+                      "surface-container": "#1c2026",
+                      "surface": "#10141a",
+                      "surface-dim": "#10141a"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "margin-mobile": "16px",
+                      "margin-desktop": "64px",
+                      "gutter": "24px",
+                      "unit": "4px",
+                      "max-width-stage": "800px"
+              },
+              "fontFamily": {
+                      "headline-md-mobile": [
+                              "Hanken Grotesk"
+                      ],
+                      "display-lg": [
+                              "Hanken Grotesk"
+                      ],
+                      "headline-md": [
+                              "Hanken Grotesk"
+                      ],
+                      "crypto-lg": [
+                              "JetBrains Mono"
+                      ],
+                      "label-caps": [
+                              "JetBrains Mono"
+                      ],
+                      "crypto-code": [
+                              "JetBrains Mono"
+                      ],
+                      "body-md": [
+                              "Hanken Grotesk"
+                      ]
+              },
+              "fontSize": {
+                      "headline-md-mobile": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "crypto-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.08em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "crypto-code": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        body {
+            background-color: #0A0E14;
+            color: #dfe2eb;
+            overflow-x: hidden;
+        }
+        .stage-shadow {
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+        .glow-public {
+            box-shadow: 0 0 40px rgba(61, 220, 151, 0.1);
+        }
+        .glow-private {
+            box-shadow: 0 0 40px rgba(179, 127, 255, 0.1);
+        }
+        .pulse-border-public {
+            animation: pulse-public 2s infinite;
+        }
+        @keyframes pulse-public {
+            0% { border-color: rgba(61, 220, 151, 0.5); }
+            50% { border-color: rgba(61, 220, 151, 1); box-shadow: 0 0 15px rgba(61, 220, 151, 0.4); }
+            100% { border-color: rgba(61, 220, 151, 0.5); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-body-md text-body-md antialiased selection:bg-public-zone selection:text-surface-base">
+<!-- Top Navigation (Hidden as this is a linear success flow, keeping focus on canvas) -->
+<!-- Main Content Area -->
+<main class="flex-grow flex flex-col items-center justify-center p-margin-mobile md:p-margin-desktop w-full relative z-10">
+<!-- The Stage -->
+<div class="w-full max-w-[800px] flex flex-col gap-8">
+<!-- Step Tracker -->
+<div class="w-full flex items-center justify-between mb-4">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-public-zone flex items-center justify-center text-surface-base">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<span class="font-label-caps text-label-caps text-public-zone">Connect</span>
+</div>
+<div class="flex-grow h-[1px] bg-public-zone opacity-30 mx-4"></div>
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-public-zone flex items-center justify-center text-surface-base">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<span class="font-label-caps text-label-caps text-public-zone">Contract</span>
+</div>
+<div class="flex-grow h-[1px] bg-public-zone opacity-30 mx-4"></div>
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-public-zone flex items-center justify-center text-surface-base">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<span class="font-label-caps text-label-caps text-public-zone">Lock</span>
+</div>
+<div class="flex-grow h-[1px] bg-public-zone opacity-30 mx-4"></div>
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-public-zone flex items-center justify-center text-surface-base pulse-border-public border-2 border-public-zone">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<span class="font-label-caps text-label-caps text-public-zone">Release</span>
+</div>
+</div>
+<!-- Primary Success Card -->
+<div class="bg-surface-elevated rounded-xl stage-shadow p-8 flex flex-col items-center justify-center text-center glow-public border border-public-zone/20 relative overflow-hidden">
+<!-- Decorative background elements -->
+<div class="absolute -top-24 -right-24 w-48 h-48 bg-public-zone/10 rounded-full blur-3xl pointer-events-none"></div>
+<div class="w-20 h-20 rounded-full bg-public-zone/10 border-2 border-public-zone flex items-center justify-center text-public-zone mb-6 pulse-border-public">
+<span class="material-symbols-outlined text-4xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<h1 class="font-display-lg text-display-lg text-on-surface mb-2">Escrow Released Successfully</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-md mx-auto mb-8 tracking-widest">Verified without revealing the secret.</p>
+<!-- Action Button -->
+<button class="bg-public-zone hover:bg-primary-fixed transition-colors duration-200 text-surface-base font-label-caps text-label-caps py-4 px-8 rounded-lg flex items-center gap-2 px-10 py-5 hover:stage-shadow">
+<span class="material-symbols-outlined">exit_to_app</span>
+                    Finalize Session
+                </button>
+</div>
+<!-- Bottom utility cards cluster -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Ledger State Card (Public) -->
+<div class="bg-surface-elevated rounded-xl stage-shadow p-6 border-l-2 border-public-zone">
+<div class="flex items-center gap-2 mb-4 text-public-zone">
+<span class="material-symbols-outlined text-sm">public</span>
+<h3 class="font-label-caps text-label-caps">Public Ledger State</h3>
+</div>
+<div class="space-y-4 font-crypto-code text-crypto-code">
+<div class="flex justify-between items-center pb-2 border-b border-surface-bright">
+<span class="text-on-surface-variant">Contract ID</span>
+<span class="text-on-surface">0x8F9B...4D2A</span>
+</div>
+<div class="flex justify-between items-center pb-2 border-b border-surface-bright">
+<span class="text-on-surface-variant">Value Locked</span>
+<span class="text-on-surface">45,000 USDC</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-on-surface-variant">Status</span>
+<div class="flex items-center gap-2 text-public-zone bg-public-zone/10 px-2 py-1 rounded">
+<span class="material-symbols-outlined text-[14px]">check</span>
+<span class="">RELEASED</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Private Session Drawer (Simulated inline for context) -->
+<div class="bg-surface-elevated rounded-xl stage-shadow p-6 border-l-2 border-private-zone opacity-80 bg-surface-container-lowest">
+<div class="flex items-center gap-2 mb-4 text-private-zone">
+<span class="material-symbols-outlined text-sm">lock</span>
+<h3 class="font-label-caps text-label-caps">Private Session</h3>
+</div>
+<div class="space-y-4 font-crypto-code text-crypto-code">
+<div class="flex justify-between items-center pb-2 border-b border-surface-bright">
+<span class="text-on-surface-variant">Local Witness</span>
+<span class="text-private-zone tracking-widest">••••••••••••</span>
+</div>
+<div class="flex justify-between items-center pb-2 border-b border-surface-bright">
+<span class="text-on-surface-variant">ZK Proof Gen</span>
+<span class="text-on-surface text-public-zone">Completed</span>
+</div>
+<div class="flex flex-col mt-4">
+<span class="text-private-zone text-sm">Proof verified. Secret remains local.</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+
+
+</body></html>

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BlindRoute - Contract Setup</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#10141a",
+                        "on-error-container": "#ffdad6",
+                        "primary": "#61f9b1",
+                        "on-tertiary": "#640036",
+                        "surface-bright": "#353940",
+                        "outline": "#859489",
+                        "tertiary": "#ffd4e0",
+                        "inverse-on-surface": "#2d3137",
+                        "surface-container": "#1c2026",
+                        "primary-container": "#3ddc97",
+                        "surface-container-high": "#262a31",
+                        "surface-variant": "#31353c",
+                        "secondary-fixed": "#eddcff",
+                        "primary-fixed-dim": "#42e09a",
+                        "on-secondary-fixed": "#280056",
+                        "inverse-surface": "#dfe2eb",
+                        "on-tertiary-fixed-variant": "#8d004e",
+                        "on-primary": "#003822",
+                        "surface-elevated": "#121820",
+                        "tertiary-container": "#ffabc7",
+                        "surface-container-low": "#181c22",
+                        "primary-fixed": "#65fdb5",
+                        "on-tertiary-container": "#9e0558",
+                        "on-tertiary-fixed": "#3e001f",
+                        "on-secondary-fixed-variant": "#5c24a4",
+                        "on-secondary": "#440088",
+                        "error-container": "#93000a",
+                        "on-surface": "#dfe2eb",
+                        "on-surface-variant": "#bbcabe",
+                        "surface-container-highest": "#31353c",
+                        "secondary": "#d7baff",
+                        "on-primary-container": "#005c3a",
+                        "outline-variant": "#3c4a41",
+                        "on-primary-fixed-variant": "#005233",
+                        "surface-dim": "#10141a",
+                        "surface-tint": "#42e09a",
+                        "error-red": "#FF4D4D",
+                        "private-accent": "#FF5FA3",
+                        "on-secondary-container": "#cca8ff",
+                        "surface-container-lowest": "#0a0e14",
+                        "tertiary-fixed": "#ffd9e3",
+                        "error": "#ffb4ab",
+                        "surface-highest": "#1C232D",
+                        "inverse-primary": "#006c45",
+                        "background": "#10141a",
+                        "secondary-container": "#5f27a7",
+                        "secondary-fixed-dim": "#d7baff",
+                        "surface-base": "#0A0E14",
+                        "text-muted": "#8A919E",
+                        "private-zone": "#B37FFF",
+                        "on-error": "#690005",
+                        "public-zone": "#3DDC97",
+                        "on-primary-fixed": "#002112",
+                        "tertiary-fixed-dim": "#ffb0ca",
+                        "on-background": "#dfe2eb"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "margin-desktop": "64px",
+                        "max-width-stage": "800px",
+                        "margin-mobile": "16px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["JetBrains Mono"],
+                        "body-md": ["Hanken Grotesk"],
+                        "crypto-lg": ["JetBrains Mono"],
+                        "crypto-code": ["JetBrains Mono"],
+                        "headline-md-mobile": ["Hanken Grotesk"],
+                        "display-lg": ["Hanken Grotesk"],
+                        "headline-md": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.08em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "crypto-lg": ["18px", { "lineHeight": "24px", "fontWeight": "500" }],
+                        "crypto-code": ["14px", { "lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "400" }],
+                        "headline-md-mobile": ["20px", { "lineHeight": "28px", "fontWeight": "500" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "500" }]
+                    },
+                    "boxShadow": {
+                        'primary-glow': '0 20px 40px rgba(0,0,0,0.4), 0 0 20px rgba(61, 220, 151, 0.1)',
+                        'private-glow': '0 20px 40px rgba(0,0,0,0.4), 0 0 20px rgba(179, 127, 255, 0.1)',
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 24px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            display: inline-block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .bg-private-stripes {
+            background-image: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(179, 127, 255, 0.05) 10px,
+                rgba(179, 127, 255, 0.05) 20px
+            );
+        }
+    </style>
+</head>
+<body class="bg-surface-base text-on-surface min-h-screen flex flex-col font-body-md overflow-x-hidden antialiased">
+<!-- TopAppBar -->
+<header class="bg-background dark:bg-background flex justify-between items-center px-margin-desktop py-4 w-full z-50 docked full-width top-0 bg-surface-container-low flat no shadows transition-all">
+<div class="flex items-center gap-4">
+<h1 class="font-headline-md text-headline-md font-bold text-on-surface tracking-tighter">BlindRoute</h1>
+<div class="hidden md:flex items-center gap-2 bg-surface-container-high rounded-full px-3 py-1">
+<span class="w-2 h-2 rounded-full bg-public-zone"></span>
+<span class="font-crypto-code text-crypto-code text-on-surface-variant">addr1q9f...3k2p</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors duration-200">
+                Preview Network
+            </button>
+<button aria-label="Wallet" class="text-on-surface-variant hover:text-primary transition-colors duration-200">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+</button>
+</div>
+</header>
+<!-- SideNavBar (Desktop) -->
+<nav class="bg-surface-container-low dark:bg-surface-container-low docked left-0 h-full w-64 bg-surface-container-low shadow-md hidden md:flex flex-col fixed left-0 top-0 h-full z-40 pt-20">
+<div class="px-6 py-4 mb-6">
+<div class="w-12 h-12 rounded-xl bg-surface-elevated flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-primary text-3xl" data-icon="shield">shield</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-primary">BlindRoute</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Cryptographic Escrow</p>
+</div>
+<div class="flex flex-col space-y-2 px-2">
+<a class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:bg-surface-variant transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="link">link</span>
+<span class="font-label-caps text-label-caps">Connect</span>
+</a>
+<a class="flex items-center gap-3 text-primary border-r-2 border-primary bg-primary/10 px-4 py-3 hover:bg-surface-variant transition-all rounded-lg active:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="description" style="font-variation-settings: 'FILL' 1;">description</span>
+<span class="font-label-caps text-label-caps">Contract</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:bg-surface-variant transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="lock">lock</span>
+<span class="font-label-caps text-label-caps">Lock</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant px-4 py-3 hover:bg-surface-variant transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="key">key</span>
+<span class="font-label-caps text-label-caps">Release</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 md:ml-64 pt-20 md:pt-8 px-margin-mobile md:px-margin-desktop flex flex-col items-center pb-32">
+<!-- Step Tracker -->
+<div class="w-full max-w-max-width-stage mb-12 flex justify-between items-center relative">
+<div class="absolute top-1/2 left-0 w-full h-0.5 bg-surface-container-high -z-10 -translate-y-1/2"></div>
+<!-- Connect (Completed) -->
+<div class="flex flex-col items-center bg-surface-base px-2">
+<div class="w-8 h-8 rounded-full bg-public-zone flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-surface-base text-sm font-bold" data-icon="check">check</span>
+</div>
+<span class="font-label-caps text-label-caps text-public-zone">CONNECT</span>
+</div>
+<!-- Contract (Active) -->
+<div class="flex flex-col items-center bg-surface-base px-2">
+<div class="w-8 h-8 rounded-full border-2 border-public-zone flex items-center justify-center mb-2 relative">
+<div class="absolute inset-0 rounded-full bg-public-zone/20 animate-ping"></div>
+<div class="w-3 h-3 rounded-full bg-public-zone"></div>
+</div>
+<span class="font-label-caps text-label-caps text-primary">CONTRACT</span>
+</div>
+<!-- Lock (Pending) -->
+<div class="flex flex-col items-center bg-surface-base px-2">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center mb-2">
+<span class="w-2 h-2 rounded-full bg-outline-variant"></span>
+</div>
+<span class="font-label-caps text-label-caps text-outline-variant">LOCK</span>
+</div>
+<!-- Release (Pending) -->
+<div class="flex flex-col items-center bg-surface-base px-2">
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center mb-2">
+<span class="w-2 h-2 rounded-full bg-outline-variant"></span>
+</div>
+<span class="font-label-caps text-label-caps text-outline-variant">RELEASE</span>
+</div>
+</div>
+<!-- The Stage -->
+<div class="w-full max-w-max-width-stage grid md:grid-cols-2 gap-gutter">
+<!-- Deploy New Contract Card -->
+<div class="bg-surface-elevated rounded-xl p-8 shadow-primary-glow border-l-2 border-public-zone hover:bg-surface-container-low transition-colors group cursor-pointer relative overflow-hidden flex flex-col h-full">
+<div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+<span class="material-symbols-outlined text-6xl text-public-zone" data-icon="add_box">add_box</span>
+</div>
+<div class="flex-1">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Deploy New Contract</h3>
+<p class="font-body-md text-body-md text-text-muted mb-6">Initiate a new cryptographic escrow agreement. You will act as the initializer.</p>
+<ul class="space-y-3 mb-8">
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-public-zone text-sm" data-icon="done">done</span>
+<span class="font-crypto-code text-crypto-code text-on-surface-variant">Generates unique contract ID</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-public-zone text-sm" data-icon="done">done</span>
+<span class="font-crypto-code text-crypto-code text-on-surface-variant">Sets locking conditions</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-public-zone text-sm" data-icon="done">done</span>
+<span class="font-crypto-code text-crypto-code text-on-surface-variant">Requires initial deposit</span>
+</li>
+</ul>
+</div>
+<button class="w-full bg-public-zone text-surface-base font-label-caps text-label-caps py-4 rounded-lg hover:bg-primary-fixed transition-colors mt-auto flex justify-center items-center gap-2">
+<span>INITIALIZE</span>
+<span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+<!-- Join Existing Card -->
+<div class="bg-surface-elevated rounded-xl p-8 shadow-2xl border-l-2 border-outline-variant hover:border-public-zone hover:shadow-primary-glow transition-all group cursor-pointer relative overflow-hidden flex flex-col h-full">
+<div class="flex-1">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Join Existing</h3>
+<p class="font-body-md text-body-md text-text-muted mb-6">Enter an existing contract ID to participate in an active escrow.</p>
+<div class="mt-4 mb-8">
+<label class="block font-label-caps text-label-caps text-on-surface-variant mb-2">CONTRACT IDENTIFIER</label>
+<div class="flex items-center bg-surface-container rounded-lg px-4 py-3 border border-surface-container-high focus-within:border-public-zone transition-colors">
+<span class="material-symbols-outlined text-outline-variant mr-3" data-icon="search">search</span>
+<input class="bg-transparent border-none outline-none text-on-surface font-crypto-code text-crypto-code w-full placeholder-outline-variant focus:ring-0 px-0" placeholder="e.g. BR-7F9A-2X..." type="text"/>
+</div>
+</div>
+</div>
+<button class="w-full bg-transparent border border-outline-variant text-on-surface font-label-caps text-label-caps py-4 rounded-lg hover:border-public-zone hover:text-public-zone transition-colors mt-auto">
+                    VERIFY &amp; JOIN
+                </button>
+</div>
+</div>
+</main>
+<!-- Private Session Drawer (Collapsed) -->
+<div class="fixed bottom-0 md:bottom-6 left-0 md:left-auto md:right-6 w-full md:w-96 bg-surface-elevated rounded-t-xl md:rounded-xl border border-surface-container-high shadow-private-glow z-50 md:z-40 transition-transform transform translate-y-0 cursor-pointer">
+<div class="px-6 py-4 flex items-center justify-between border-b border-surface-container-high bg-private-stripes rounded-t-xl md:rounded-xl">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-private-zone" data-icon="lock">lock</span>
+<span class="font-label-caps text-label-caps text-private-zone">PRIVATE SESSION ACTIVE</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="expand_less">expand_less</span>
+</div>
+</div>
+<!-- BottomNavBar (Mobile) -->
+<nav class="bg-surface-container-highest dark:bg-surface-container-highest docked full-width bottom-0 rounded-t-xl bg-surface-container-highest shadow-2xl shadow-2xl fixed bottom-0 w-full z-40 flex justify-around items-center px-4 py-2 md:hidden pb-safe">
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="link">link</span>
+<span class="font-label-caps text-label-caps text-[10px]">Connect</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary bg-primary/10 rounded-xl p-2 scale-110 duration-300" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="description" style="font-variation-settings: 'FILL' 1;">description</span>
+<span class="font-label-caps text-label-caps text-[10px]">Contract</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="lock">lock</span>
+<span class="font-label-caps text-label-caps text-[10px]">Lock</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined mb-1" data-icon="key">key</span>
+<span class="font-label-caps text-label-caps text-[10px]">Release</span>
+</a>
+</nav>
+</body></html>
