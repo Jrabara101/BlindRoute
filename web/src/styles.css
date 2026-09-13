@@ -102,6 +102,21 @@ body {
     'GRAD' 0,
     'opsz' 24;
 }
+/*
+ * Google's Material Symbols stylesheet sets `.material-symbols-outlined {
+ * display: inline-block }` as unlayered CSS, and per the CSS Cascade Layers
+ * spec, ANY unlayered rule beats ANY rule inside an `@layer` block —
+ * regardless of source order or specificity. Tailwind v4's utilities
+ * (including `.hidden`) all live in `@layer utilities`, so without this
+ * override, an icon with both `material-symbols-outlined` and `hidden`
+ * classes stayed visible (this exact bug shipped to production once,
+ * caused by the CDN->build-time Tailwind migration — the CDN version's
+ * utilities were unlayered too, so `.hidden` used to win on source order
+ * alone). This rule is unlayered too, so it wins the same way.
+ */
+.material-symbols-outlined.hidden {
+  display: none;
+}
 .material-symbols-outlined[data-weight='fill'] {
   font-variation-settings:
     'FILL' 1,
