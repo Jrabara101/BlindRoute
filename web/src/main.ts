@@ -124,14 +124,34 @@ const feedbackDismissButton = document.getElementById('feedback-dismiss') as HTM
 const feedbackBackdrop = document.getElementById('feedback-backdrop') as HTMLDivElement;
 const feedbackIframe = document.getElementById('feedback-iframe') as HTMLIFrameElement;
 
-let feedbackIframeLoaded = false;
+// Google Forms entry ID for the "Wallet address" question — found via the
+// form's embedded FB_PUBLIC_LOAD_DATA_ structure, not guessable from the
+// visible DOM (modern Forms renders inputs without a plain `name` attribute).
+const FEEDBACK_FORM_WALLET_ENTRY_ID = 'entry.2005620554';
+
+// Tracks whether the iframe was loaded with a wallet address already
+// prefilled — distinct from "loaded at all" so that if the modal is opened
+// before a wallet is connected (an early click on Feedback, say), a later
+// open still gets one chance to add the prefill once a wallet connects.
+let feedbackIframeLoadedWithWallet = false;
 const openFeedbackModal = (): void => {
-  // Lazy-load the iframe src so the form only fetches once actually opened.
-  // (iframe.src always reads back as an absolute URL — even the host page's
-  // own URL when the attribute is empty — so track loaded state separately.)
-  if (!feedbackIframeLoaded) {
-    feedbackIframeLoaded = true;
-    feedbackIframe.src = feedbackIframe.dataset.src ?? '';
+  const baseSrc = feedbackIframe.dataset.src ?? '';
+  const alreadyLoaded = feedbackIframe.src !== '' && feedbackIframe.src !== window.location.href;
+  const canAddWalletNow = !feedbackIframeLoadedWithWallet && connection?.unshieldedAddress && baseSrc;
+  if (!alreadyLoaded || canAddWalletNow) {
+    // Prefill the wallet-address question with the connected wallet's own
+    // address so the tester doesn't have to copy it from Lace and paste it
+    // in manually — one less step between finishing the app and giving
+    // feedback. Google Forms accepts this via a plain query param on the
+    // embedded viewform URL; the field is still editable if it's wrong.
+    if (connection?.unshieldedAddress && baseSrc) {
+      const url = new URL(baseSrc);
+      url.searchParams.set(FEEDBACK_FORM_WALLET_ENTRY_ID, connection.unshieldedAddress);
+      feedbackIframe.src = url.toString();
+      feedbackIframeLoadedWithWallet = true;
+    } else if (!alreadyLoaded) {
+      feedbackIframe.src = baseSrc;
+    }
   }
   feedbackModal.classList.remove('hidden');
   feedbackModal.classList.add('flex');

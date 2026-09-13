@@ -23,6 +23,16 @@ and paste the live form URL into `docs/FEEDBACK.md` § Feedback Collection Metho
 - **Validation:** none (self-reported; cross-checked manually against the
   explorer before adding to `USERS.md`)
 - Help text: "The address you connected with in Lace (starts with `addr_test1...`)"
+- **Auto-filled by the app:** `web/src/main.ts`'s `openFeedbackModal()` appends
+  `entry.2005620554=<connected wallet address>` to the embedded form's iframe
+  `src` when a wallet is connected, so testers don't have to copy/paste it
+  manually — the field stays editable if it's wrong. That entry ID is
+  **specific to this exact form instance** (found via the form's embedded
+  `FB_PUBLIC_LOAD_DATA_` JSON, since modern Google Forms doesn't expose a
+  plain `name="entry.NNN"` attribute in the visible DOM). **If this form is
+  ever recreated from scratch** (not just edited), the entry ID changes and
+  `FEEDBACK_FORM_WALLET_ENTRY_ID` in `main.ts` must be updated to match, or
+  the prefill silently does nothing.
 
 ## 2. Which parts of the app did you try?
 - **Type:** Checkboxes (multi-select)
