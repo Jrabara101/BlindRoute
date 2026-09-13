@@ -1,3 +1,5 @@
+import './styles.css';
+
 // Buffer polyfill: some Midnight SDK packages assume a Node-like Buffer global.
 import { Buffer } from 'buffer';
 (globalThis as unknown as { Buffer: typeof Buffer }).Buffer = Buffer;
@@ -322,7 +324,7 @@ connectButton.addEventListener('click', () => {
     setStatus('wallet-status', 'connecting...');
     try {
       connection = await connectWallet();
-      log(`Connected to network: ${connection.networkId}`);
+      log(`Connected via ${connection.walletName} to network: ${connection.networkId}`);
       setNetworkId(connection.networkId as Parameters<typeof setNetworkId>[0]);
 
       const configuration = await connection.api.getConfiguration();
@@ -436,18 +438,35 @@ lockButton.addEventListener('click', () => {
     const refundTicks = BigInt(refundTicksStr || '0');
     lockButton.disabled = true;
     showStage('locking');
+    let txSucceeded = false;
     try {
       // The commitment is a public hash — safe to log. The secret behind it never is.
       const commitment = commitmentOf(privateState.deliveryProofSecret);
       log(`Commitment (public, hex): ${Buffer.from(commitment).toString('hex')}`);
       const result = await lockEscrow(activeContract, paymentAmount, commitment, refundTicks);
       log(`Lock tx ${result.public.txId} included at block ${result.public.blockHeight}`);
-      await refreshLedgerState();
+      txSucceeded = true;
     } catch (e) {
       const msg = describeError(e);
       log(`Lock error: ${msg}`);
       lockButton.disabled = false;
       showError(msg);
+      return;
+    }
+    // Refreshing the on-chain state is a separate network call from the
+    // transaction itself — if it fails (indexer lag, network blip), the lock
+    // already succeeded on-chain, so this must never be reported as a lock
+    // failure. Report it distinctly and let the user retry the refresh.
+    try {
+      await refreshLedgerState();
+    } catch (e) {
+      log(`Lock succeeded, but refreshing the ledger state failed: ${describeError(e)}`);
+      setStatus(
+        'escrow-status-empty',
+        'Lock transaction succeeded, but the app could not fetch the updated state. Reconnect or reload to see it.',
+        'error',
+      );
+      lockButton.disabled = false;
     }
   })();
 });
@@ -464,12 +483,25 @@ releaseButton.addEventListener('click', () => {
     try {
       const result = await releaseEscrow(activeContract);
       log(`Release tx ${result.public.txId} included at block ${result.public.blockHeight}`);
-      await refreshLedgerState();
     } catch (e) {
       const msg = describeError(e);
       log(`Release error: ${msg}`);
       releaseButton.disabled = false;
       showError(msg);
+      return;
+    }
+    // See the lock handler above for why the ledger refresh is reported
+    // separately from the transaction's own success/failure.
+    try {
+      await refreshLedgerState();
+    } catch (e) {
+      log(`Release succeeded, but refreshing the ledger state failed: ${describeError(e)}`);
+      setStatus(
+        'escrow-status',
+        'Release transaction succeeded, but the app could not fetch the updated state. Reconnect or reload to see it.',
+        'error',
+      );
+      releaseButton.disabled = false;
     }
   })();
 });
@@ -483,11 +515,22 @@ tickButton.addEventListener('click', () => {
     try {
       const result = await tick(activeContract);
       log(`Tick tx ${result.public.txId} included at block ${result.public.blockHeight}`);
-      await refreshLedgerState();
     } catch (e) {
       const msg = describeError(e);
       log(`Tick error: ${msg}`);
       showError(msg);
+      tickButton.disabled = false;
+      return;
+    }
+    try {
+      await refreshLedgerState();
+    } catch (e) {
+      log(`Tick succeeded, but refreshing the ledger state failed: ${describeError(e)}`);
+      setStatus(
+        'escrow-status',
+        'Tick transaction succeeded, but the app could not fetch the updated state. Reconnect or reload to see it.',
+        'error',
+      );
     } finally {
       tickButton.disabled = false;
     }
@@ -501,11 +544,22 @@ refundButton.addEventListener('click', () => {
     try {
       const result = await refundEscrow(activeContract);
       log(`Refund tx ${result.public.txId} included at block ${result.public.blockHeight}`);
-      await refreshLedgerState();
     } catch (e) {
       const msg = describeError(e);
       log(`Refund error: ${msg}`);
       showError(msg);
+      refundButton.disabled = false;
+      return;
+    }
+    try {
+      await refreshLedgerState();
+    } catch (e) {
+      log(`Refund succeeded, but refreshing the ledger state failed: ${describeError(e)}`);
+      setStatus(
+        'escrow-status',
+        'Refund transaction succeeded, but the app could not fetch the updated state. Reconnect or reload to see it.',
+        'error',
+      );
     } finally {
       refundButton.disabled = false;
     }

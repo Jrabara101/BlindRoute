@@ -15,6 +15,23 @@ export class WalletError extends Error {}
 
 export const listWallets = (): InitialAPI[] => (window.midnight ? Object.values(window.midnight) : []);
 
+/**
+ * Picks the wallet this app is built against out of every injected Midnight
+ * wallet — `window.midnight` can hold more than one extension (e.g. Lace
+ * alongside 1am wallet), and blindly taking the first entry means whichever
+ * extension happens to load first silently becomes "the" wallet, even
+ * though this app's provider wiring (buildProviders in contract.ts) assumes
+ * Lace's specific DApp Connector API behavior. A non-Lace wallet can still
+ * report itself as connected while failing in stranger ways further down
+ * the line — e.g. during transaction submission, since its API surface can
+ * diverge from Lace's in ways this app never told the user to expect.
+ */
+export const selectWallet = (wallets: InitialAPI[]): InitialAPI | null => {
+  if (wallets.length === 0) return null;
+  const lace = wallets.find((w) => w.name.toLowerCase().includes('lace'));
+  return lace ?? wallets[0];
+};
+
 /** Narrow an unknown thrown value down to the DApp Connector's APIError shape, if it matches. */
 const asApiError = (e: unknown): { code?: string; reason?: string } | null => {
   if (e && typeof e === 'object' && 'type' in e && (e as { type?: unknown }).type === 'DAppConnectorAPIError') {
@@ -39,20 +56,32 @@ export interface WalletConnection {
   api: ConnectedAPI;
   networkId: string;
   unshieldedAddress: string;
+  walletName: string;
 }
 
 /**
- * Connect to the first injected Midnight wallet (Lace), then verify it
- * actually landed on the network this app requires. connect() only *hints*
- * the desired network — the wallet may stay on whatever network the user
- * has it configured for, so the mismatch has to be checked after the fact.
+ * Connect to the Lace wallet (falling back to whatever's injected if Lace
+ * isn't present), then verify it actually landed on the network this app
+ * requires. connect() only *hints* the desired network — the wallet may
+ * stay on whatever network the user has it configured for, so the mismatch
+ * has to be checked after the fact.
  */
 export const connectWallet = async (): Promise<WalletConnection> => {
   const wallets = listWallets();
   if (wallets.length === 0) {
     throw new WalletError('No Midnight wallet found. Install the Lace wallet extension, then reload this page.');
   }
-  const wallet = wallets[0];
+  const wallet = selectWallet(wallets);
+  if (!wallet) {
+    throw new WalletError('No Midnight wallet found. Install the Lace wallet extension, then reload this page.');
+  }
+  if (!wallet.name.toLowerCase().includes('lace')) {
+    throw new WalletError(
+      `This app is only tested against the Lace wallet, but '${wallet.name}' responded instead ` +
+        `(you may have another Midnight wallet extension installed alongside or instead of Lace). ` +
+        `Disable other Midnight-wallet extensions so Lace is the only one active, then reload this page.`,
+    );
+  }
 
   let connectedApi: ConnectedAPI;
   try {
@@ -76,5 +105,5 @@ export const connectWallet = async (): Promise<WalletConnection> => {
   }
 
   const { unshieldedAddress } = await connectedApi.getUnshieldedAddress();
-  return { api: connectedApi, networkId: status.networkId, unshieldedAddress };
+  return { api: connectedApi, networkId: status.networkId, unshieldedAddress, walletName: wallet.name };
 };

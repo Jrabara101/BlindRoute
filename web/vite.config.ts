@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import wasm from 'vite-plugin-wasm';
+import tailwindcss from '@tailwindcss/vite';
 
 // Config adapted from Midnight's official example-bboard/bboard-ui, which needed
 // specific handling for compact-runtime's onchain-runtime WASM module. Vite 8
@@ -24,7 +25,7 @@ export default defineConfig({
       },
     },
   },
-  plugins: [wasm()],
+  plugins: [wasm(), tailwindcss()],
   optimizeDeps: {
     include: ['@midnight-ntwrk/compact-runtime'],
   },

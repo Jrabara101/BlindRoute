@@ -47,6 +47,52 @@ Contract Address note for why Preview rather than Preprod).
 > unclear" is genuinely useful: https://forms.gle/6oSenWAdL55RkkPa8
 > Happy to return the favor if you're testing something too. Thanks!
 
+## d) High-conversion pitch (curiosity hook + social proof + CTA)
+
+Use this version when you want maximum click-through — it leads with intrigue
+instead of a feature list, and closes with a specific, low-friction ask
+rather than an open-ended "try it out."
+
+> **Would you trust a stranger with your money if they could prove — without
+> saying a word — that they earned it?**
+>
+> That's not a trick question. It's a real cryptographic contract I just
+> built, and I need 50 people to break it before I can call it done.
+>
+> BlindRoute is a delivery escrow where a courier unlocks a payment by
+> *proving* they know a secret — without ever revealing what that secret is,
+> to anyone, ever. Not to me, not to the blockchain, not to you. Zero-knowledge,
+> for real money, running live right now on Midnight.
+>
+> I'm one of a small group of builders testing this before a public launch,
+> and early testers get their wallet address credited as a verified
+> contributor. Takes under 5 minutes, costs nothing (testnet funds are free),
+> and you'll be one of the first people on Earth to try it.
+>
+> 👉 **Try it live:** https://blindroute-web.surge.sh/
+> (Lace wallet required — free, 30-second install)
+>
+> Once you've locked and released an escrow, tell me what broke — even one
+> line helps. That's genuinely all I'm asking for.
+>
+> Thanks for being early. Seriously.
+
+(150 words — trim the two middle paragraphs for Discord/Telegram character limits)
+
+**Why this version is built the way it is:**
+- **Opens with a question, not a pitch** — curiosity gets read; a feature
+  list gets skimmed and skipped.
+- **"50 people to break it"** reframes testing as a challenge/invitation
+  rather than a favor being asked — people engage more with "help me find
+  the flaw" than "please try my app."
+- **"One of a small group... before public launch"** is genuine scarcity/
+  exclusivity (it's true — you're at 0/50), not manufactured hype.
+- **Names the specific, tiny ask last** ("one line helps") — after someone's
+  emotionally bought in, a small concrete CTA converts far better than a
+  vague "let me know what you think" buried up top.
+- **Ends on gratitude, not another pitch** — closing on "thanks for being
+  early" instead of a second CTA avoids the reader feeling sold to twice.
+
 ## Tracking outreach
 
 Log where/when each message was sent (channel, date, response count) here so
